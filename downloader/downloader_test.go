@@ -1,0 +1,80 @@
+package downloader_test
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/hiroara/drawin/downloader"
+	"github.com/hiroara/drawin/job"
+)
+
+func TestCreateDir(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "test-out")
+	d := downloader.New(dir)
+
+	_, err := os.Stat(dir)
+	require.ErrorIs(t, err, os.ErrNotExist)
+
+	require.NoError(t, d.CreateDir())
+
+	stat, err := os.Stat(dir)
+	require.NoError(t, err)
+	if assert.NotNil(t, stat) {
+		assert.True(t, stat.IsDir())
+	}
+}
+
+func TestDownload(t *testing.T) {
+	t.Run("ResponseStatusCode=OK", func(t *testing.T) {
+		dir := filepath.Join(t.TempDir(), "test-out")
+		d := downloader.New(dir)
+		require.NoError(t, d.CreateDir())
+
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			fmt.Fprintln(w, "Successful")
+		}))
+		defer srv.Close()
+
+		j := &job.Job{Name: "image1.jpg", URL: srv.URL}
+		err := d.Download(context.Background(), j)
+		require.NoError(t, err)
+		assert.True(t, j.Downloaded)
+
+		f, err := os.Open(filepath.Join(dir, "image1.jpg"))
+		require.NoError(t, err)
+		buf := bytes.NewBuffer(nil)
+		_, err = io.Copy(buf, f)
+		require.NoError(t, err)
+		assert.Equal(t, "Successful\n", buf.String())
+	})
+
+	t.Run("ResponseStatusCode=NotFound", func(t *testing.T) {
+		dir := filepath.Join(t.TempDir(), "test-out")
+		d := downloader.New(dir)
+		require.NoError(t, d.CreateDir())
+
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			w.WriteHeader(404)
+			fmt.Fprintln(w, "Not Found")
+		}))
+		defer srv.Close()
+
+		j := &job.Job{Name: "image1.jpg", URL: srv.URL}
+		err := d.Download(context.Background(), j)
+		require.Error(t, err)
+		assert.False(t, j.Downloaded)
+
+		_, err = os.Stat(filepath.Join(dir, "image1.jpg"))
+		require.ErrorIs(t, err, os.ErrNotExist)
+	})
+}

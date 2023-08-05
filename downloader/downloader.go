@@ -1,0 +1,67 @@
+package downloader
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"path"
+
+	"github.com/hiroara/drawin/job"
+)
+
+var downloadFailure = errors.New("Download failed.")
+
+type Downloader struct {
+	dir string
+}
+
+func New(dir string) *Downloader {
+	return &Downloader{dir: dir}
+}
+
+func (d *Downloader) CreateDir() error {
+	return os.MkdirAll(d.dir, 0755)
+}
+
+func (d *Downloader) Download(ctx context.Context, j *job.Job) error {
+	p := d.fullpath(j.Name)
+
+	_, err := os.Stat(p)
+	if err == nil { // File exists
+		return nil // Bypass
+	}
+
+	resp, err := http.Get(j.URL)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("%w Unexpected response status code: %d", downloadFailure, resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	if err := store(p, body); err != nil {
+		return err
+	}
+	j.Downloaded = true
+
+	return nil
+}
+
+func store(p string, data []byte) error {
+	return os.WriteFile(p, data, 0644)
+}
+
+func (d *Downloader) fullpath(name string) string {
+	return path.Join(d.dir, name)
+}
