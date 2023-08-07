@@ -9,16 +9,16 @@ import (
 	"github.com/hiroara/carbo/source"
 	"github.com/hiroara/carbo/task"
 
+	"github.com/hiroara/drawin/client"
 	"github.com/hiroara/drawin/database"
-	"github.com/hiroara/drawin/downloader"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/reader"
 	"github.com/hiroara/drawin/reporter"
 )
 
-func downloadFiles(paths []string, reportPath string, db *database.DB) (*flow.Flow, error) {
-	d := downloader.New(outdir)
-	if err := d.CreateDir(); err != nil {
+func downloadFiles(paths []string, reportPath string, cacheDB *database.DB) (*flow.Flow, error) {
+	cli := client.New(outdir)
+	if err := cli.CreateDir(); err != nil {
 		return nil, err
 	}
 
@@ -37,7 +37,7 @@ func downloadFiles(paths []string, reportPath string, db *database.DB) (*flow.Fl
 		lbs.AsTask(),
 		pipe.Map(func(ctx context.Context, urls []string) ([]*job.Job, error) {
 			jobs := make([]*job.Job, 0, len(urls))
-			err := database.Update(db, func(buc *database.Bucket[*job.Job]) error {
+			err := database.Update(cacheDB, func(buc *database.Bucket[*job.Job]) error {
 				s := job.NewStore(buc)
 				for _, u := range urls {
 					j, err := s.CreateJob(u)
@@ -64,13 +64,13 @@ func downloadFiles(paths []string, reportPath string, db *database.DB) (*flow.Fl
 	)
 	js = task.Connect(
 		js.AsTask(),
-		pipe.Tap(d.Download).Concurrent(concurrency).AsTask(),
+		pipe.Tap(cli.Download).Concurrent(concurrency).AsTask(),
 		0,
 	)
 	js = task.Connect(
 		js.AsTask(),
 		pipe.Tap(func(ctx context.Context, j *job.Job) error {
-			return database.Update(db, func(buc *database.Bucket[*job.Job]) error { return job.NewStore(buc).Put(j) })
+			return database.Update(cacheDB, func(buc *database.Bucket[*job.Job]) error { return job.NewStore(buc).Put(j) })
 		}).AsTask(),
 		0,
 	)
@@ -91,13 +91,13 @@ func downloadFiles(paths []string, reportPath string, db *database.DB) (*flow.Fl
 }
 
 func start(ctx context.Context, paths []string, reportPath string) error {
-	db, err := database.Open(bucket)
+	cacheDB, err := database.Open(bucket)
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer cacheDB.Close()
 
-	fl, err := downloadFiles(paths, reportPath, db)
+	fl, err := downloadFiles(paths, reportPath, cacheDB)
 	if err != nil {
 		return err
 	}

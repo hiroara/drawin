@@ -1,4 +1,4 @@
-package downloader_test
+package client_test
 
 import (
 	"bytes"
@@ -14,18 +14,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/hiroara/drawin/downloader"
+	"github.com/hiroara/drawin/client"
 	"github.com/hiroara/drawin/job"
 )
 
 func TestCreateDir(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "test-out")
-	d := downloader.New(dir)
+	cli := client.New(dir)
 
 	_, err := os.Stat(dir)
 	require.ErrorIs(t, err, os.ErrNotExist)
 
-	require.NoError(t, d.CreateDir())
+	require.NoError(t, cli.CreateDir())
 
 	stat, err := os.Stat(dir)
 	require.NoError(t, err)
@@ -37,8 +37,8 @@ func TestCreateDir(t *testing.T) {
 func TestDownload(t *testing.T) {
 	t.Run("ResponseStatusCode=OK", func(t *testing.T) {
 		dir := filepath.Join(t.TempDir(), "test-out")
-		d := downloader.New(dir)
-		require.NoError(t, d.CreateDir())
+		cli := client.New(dir)
+		require.NoError(t, cli.CreateDir())
 
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			fmt.Fprintln(w, "Successful")
@@ -46,7 +46,7 @@ func TestDownload(t *testing.T) {
 		defer srv.Close()
 
 		j := &job.Job{Name: "image1.jpg", URL: srv.URL}
-		err := d.Download(context.Background(), j)
+		err := cli.Download(context.Background(), j)
 		require.NoError(t, err)
 		assert.Equal(t, job.DownloadAction, j.Action)
 
@@ -61,8 +61,8 @@ func TestDownload(t *testing.T) {
 
 	t.Run("ResponseStatusCode=NotFound", func(t *testing.T) {
 		dir := filepath.Join(t.TempDir(), "test-out")
-		d := downloader.New(dir)
-		require.NoError(t, d.CreateDir())
+		cli := client.New(dir)
+		require.NoError(t, cli.CreateDir())
 
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(404)
@@ -71,7 +71,7 @@ func TestDownload(t *testing.T) {
 		defer srv.Close()
 
 		j := &job.Job{Name: "image1.jpg", URL: srv.URL}
-		err := d.Download(context.Background(), j)
+		err := cli.Download(context.Background(), j)
 		require.Error(t, err)
 		assert.Empty(t, j.Action)
 		assert.Empty(t, j.ContentLength)
