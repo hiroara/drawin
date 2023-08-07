@@ -45,3 +45,7 @@ func (s *Store) CreateJob(url string) (*Job, error) {
 		n.next() // Generate next name and retry
 	}
 }
+
+func (s *Store) Put(j *Job) error {
+	return s.storage.Put([]byte(j.Name), j)
+}

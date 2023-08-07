@@ -10,7 +10,7 @@ import (
 	"github.com/hiroara/drawin/job"
 )
 
-func TestStore(t *testing.T) {
+func TestStoreCreateJob(t *testing.T) {
 	db, err := database.Open([]byte("test-bucket"))
 	require.NoError(t, err)
 	defer db.Close()
@@ -52,6 +52,25 @@ func TestStore(t *testing.T) {
 			assert.Equal(t, "image1.1.jpg", j.Name)
 		}
 
+		return nil
+	})
+	require.NoError(t, err)
+}
+
+func TestStorePut(t *testing.T) {
+	db, err := database.Open([]byte("test-bucket"))
+	require.NoError(t, err)
+	defer db.Close()
+
+	err = database.Update(db, func(buc *database.Bucket[*job.Job]) error {
+		st := job.NewStore(buc)
+		require.NoError(t, st.Put(&job.Job{Name: "test.jpg"}))
+
+		val, err := buc.Get([]byte("test.jpg"))
+		require.NoError(t, err)
+		if assert.NotNil(t, val) {
+			assert.Equal(t, "test.jpg", val.Name)
+		}
 		return nil
 	})
 	require.NoError(t, err)

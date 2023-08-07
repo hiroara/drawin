@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 
 	"github.com/hiroara/carbo/flow"
 	"github.com/hiroara/carbo/pipe"
@@ -14,18 +13,10 @@ import (
 	"github.com/hiroara/drawin/downloader"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/reader"
+	"github.com/hiroara/drawin/reporter"
 )
 
-func debug(ctx context.Context, j *job.Job) error {
-	action := "downloaded"
-	if !j.Downloaded {
-		action = "cache"
-	}
-	log.Printf("%s => %s (%s)", j.URL, j.Name, action)
-	return nil
-}
-
-func downloadFiles(paths []string, db *database.DB) (*flow.Flow, error) {
+func downloadFiles(paths []string, reportPath string, db *database.DB) (*flow.Flow, error) {
 	d := downloader.New(outdir)
 	if err := d.CreateDir(); err != nil {
 		return nil, err
@@ -64,35 +55,49 @@ func downloadFiles(paths []string, db *database.DB) (*flow.Flow, error) {
 			}
 			return jobs, nil
 		}).AsTask(),
-		0,
+		1,
 	)
 	js := task.Connect(
 		jbs.AsTask(),
 		pipe.FlattenSlice[*job.Job]().AsTask(),
 		0,
 	)
-	bs := task.Connect(
+	js = task.Connect(
 		js.AsTask(),
 		pipe.Tap(d.Download).Concurrent(concurrency).AsTask(),
 		0,
 	)
-	sin := task.Connect(
-		bs.AsTask(),
-		sink.ElementWise(debug).AsTask(),
+	js = task.Connect(
+		js.AsTask(),
+		pipe.Tap(func(ctx context.Context, j *job.Job) error {
+			return database.Update(db, func(buc *database.Bucket[*job.Job]) error { return job.NewStore(buc).Put(j) })
+		}).AsTask(),
 		0,
 	)
+
+	rep, err := reporter.OpenJSON(reportPath)
+	if err != nil {
+		return nil, err
+	}
+
+	sin := task.Connect(
+		js.AsTask(),
+		sink.ElementWise(func(ctx context.Context, j *job.Job) error { return rep.Write(j) }).AsTask(),
+		0,
+	)
+	sin.Defer(func() { rep.Close() })
 
 	return flow.FromTask(sin), nil
 }
 
-func start(ctx context.Context, paths []string) error {
+func start(ctx context.Context, paths []string, reportPath string) error {
 	db, err := database.Open(bucket)
 	if err != nil {
 		return err
 	}
 	defer db.Close()
 
-	fl, err := downloadFiles(paths, db)
+	fl, err := downloadFiles(paths, reportPath, db)
 	if err != nil {
 		return err
 	}

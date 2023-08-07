@@ -31,6 +31,7 @@ func (d *Downloader) Download(ctx context.Context, j *job.Job) error {
 
 	_, err := os.Stat(p)
 	if err == nil { // File exists
+		j.Action = job.CacheAction
 		return nil // Bypass
 	}
 
@@ -53,7 +54,8 @@ func (d *Downloader) Download(ctx context.Context, j *job.Job) error {
 	if err := store(p, body); err != nil {
 		return err
 	}
-	j.Downloaded = true
+	j.Action = job.DownloadAction
+	j.ContentLength = resp.ContentLength
 
 	return nil
 }

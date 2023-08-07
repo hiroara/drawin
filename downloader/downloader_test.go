@@ -48,7 +48,7 @@ func TestDownload(t *testing.T) {
 		j := &job.Job{Name: "image1.jpg", URL: srv.URL}
 		err := d.Download(context.Background(), j)
 		require.NoError(t, err)
-		assert.True(t, j.Downloaded)
+		assert.Equal(t, job.DownloadAction, j.Action)
 
 		f, err := os.Open(filepath.Join(dir, "image1.jpg"))
 		require.NoError(t, err)
@@ -56,6 +56,7 @@ func TestDownload(t *testing.T) {
 		_, err = io.Copy(buf, f)
 		require.NoError(t, err)
 		assert.Equal(t, "Successful\n", buf.String())
+		assert.Equal(t, int64(11), j.ContentLength)
 	})
 
 	t.Run("ResponseStatusCode=NotFound", func(t *testing.T) {
@@ -72,7 +73,8 @@ func TestDownload(t *testing.T) {
 		j := &job.Job{Name: "image1.jpg", URL: srv.URL}
 		err := d.Download(context.Background(), j)
 		require.Error(t, err)
-		assert.False(t, j.Downloaded)
+		assert.Empty(t, j.Action)
+		assert.Empty(t, j.ContentLength)
 
 		_, err = os.Stat(filepath.Join(dir, "image1.jpg"))
 		require.ErrorIs(t, err, os.ErrNotExist)

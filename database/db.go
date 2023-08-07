@@ -3,7 +3,6 @@ package database
 import (
 	"os"
 
-	"github.com/hiroara/carbo/marshal"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -32,9 +31,15 @@ func Open(bucket []byte) (*DB, error) {
 	return &DB{db: db, file: f, bucket: bucket}, nil
 }
 
+func View[T any](db *DB, fn func(b *Bucket[T]) error) error {
+	return db.db.View(func(tx *bolt.Tx) error {
+		return fn(newBucket[T](tx.Bucket(db.bucket)))
+	})
+}
+
 func Update[T any](db *DB, fn func(b *Bucket[T]) error) error {
 	return db.db.Update(func(tx *bolt.Tx) error {
-		return fn(&Bucket[T]{bucket: tx.Bucket(db.bucket), marshal: marshal.Gob[T]()})
+		return fn(newBucket[T](tx.Bucket(db.bucket)))
 	})
 }
 

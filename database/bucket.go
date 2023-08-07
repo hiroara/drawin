@@ -10,6 +10,10 @@ type Bucket[T any] struct {
 	marshal marshal.Spec[T]
 }
 
+func newBucket[T any](bucket *bolt.Bucket) *Bucket[T] {
+	return &Bucket[T]{bucket: bucket, marshal: marshal.Gob[T]()}
+}
+
 func (b *Bucket[T]) Get(key []byte) (T, error) {
 	bs := b.bucket.Get(key)
 	if bs == nil {

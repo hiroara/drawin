@@ -24,7 +24,21 @@ func TestOpen(t *testing.T) {
 	require.NoError(t, db.Close())
 }
 
-func TestDBRun(t *testing.T) {
+func TestDBView(t *testing.T) {
+	t.Parallel()
+
+	db, err := database.Open(bucket)
+	require.NoError(t, err)
+	defer db.Close()
+
+	err = database.View(db, func(buc *database.Bucket[*entry]) error {
+		assert.NotNil(t, buc)
+		return nil
+	})
+	require.NoError(t, err)
+}
+
+func TestDBUpdate(t *testing.T) {
 	t.Parallel()
 
 	db, err := database.Open(bucket)
