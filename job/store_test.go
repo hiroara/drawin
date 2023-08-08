@@ -1,6 +1,7 @@
 package job_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,11 +12,13 @@ import (
 )
 
 func TestStoreCreateJob(t *testing.T) {
-	db, err := database.Open([]byte("test-bucket"))
+	t.Parallel()
+
+	db, err := database.OpenSingle[*job.Job](filepath.Join(t.TempDir(), "test.db"), []byte("test-bucket"))
 	require.NoError(t, err)
 	defer db.Close()
 
-	err = database.Update(db, func(buc *database.Bucket[*job.Job]) error {
+	err = db.Update(func(buc *database.Bucket[*job.Job]) error {
 		st := job.NewStore(buc)
 
 		url1 := "https://example.com/dir1/image1.jpg"
@@ -58,11 +61,13 @@ func TestStoreCreateJob(t *testing.T) {
 }
 
 func TestStorePut(t *testing.T) {
-	db, err := database.Open([]byte("test-bucket"))
+	t.Parallel()
+
+	db, err := database.OpenSingle[*job.Job](filepath.Join(t.TempDir(), "test.db"), []byte("test-bucket"))
 	require.NoError(t, err)
 	defer db.Close()
 
-	err = database.Update(db, func(buc *database.Bucket[*job.Job]) error {
+	err = db.Update(func(buc *database.Bucket[*job.Job]) error {
 		st := job.NewStore(buc)
 		require.NoError(t, st.Put(&job.Job{Name: "test.jpg"}))
 

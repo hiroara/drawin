@@ -12,12 +12,11 @@ import (
 func TestBucket(t *testing.T) {
 	t.Parallel()
 
-	bucket := []byte("test-bucket")
 	key1 := []byte("item1")
 
-	db, err := database.Open(bucket)
+	sdb, err := openSingleDB(t)
 	require.NoError(t, err)
-	err = database.Update(db, func(buc *database.Bucket[*entry]) error {
+	err = sdb.Update(func(buc *database.Bucket[*entry]) error {
 		e, err := buc.Get(key1)
 		require.NoError(t, err)
 		assert.Nil(t, e)

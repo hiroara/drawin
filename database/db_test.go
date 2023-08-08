@@ -1,24 +1,26 @@
 package database_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	bolt "go.etcd.io/bbolt"
 
 	"github.com/hiroara/drawin/database"
 )
 
-type entry struct {
-	Name string
-}
+func openDB(t *testing.T) (*database.DB, error) {
+	path := filepath.Join(t.TempDir(), "test.db")
 
-var bucket = []byte("test-bucket")
+	return database.Open(path)
+}
 
 func TestOpen(t *testing.T) {
 	t.Parallel()
 
-	db, err := database.Open(bucket)
+	db, err := openDB(t)
 	require.NoError(t, err)
 	assert.NotNil(t, db)
 	require.NoError(t, db.Close())
@@ -27,12 +29,12 @@ func TestOpen(t *testing.T) {
 func TestDBView(t *testing.T) {
 	t.Parallel()
 
-	db, err := database.Open(bucket)
+	db, err := openDB(t)
 	require.NoError(t, err)
 	defer db.Close()
 
-	err = database.View(db, func(buc *database.Bucket[*entry]) error {
-		assert.NotNil(t, buc)
+	err = db.View(func(tx *bolt.Tx) error {
+		assert.NotNil(t, tx)
 		return nil
 	})
 	require.NoError(t, err)
@@ -41,12 +43,14 @@ func TestDBView(t *testing.T) {
 func TestDBUpdate(t *testing.T) {
 	t.Parallel()
 
-	db, err := database.Open(bucket)
+	path := filepath.Join(t.TempDir(), "test.db")
+
+	db, err := database.Open(path)
 	require.NoError(t, err)
 	defer db.Close()
 
-	err = database.Update(db, func(buc *database.Bucket[*entry]) error {
-		assert.NotNil(t, buc)
+	err = db.Update(func(tx *bolt.Tx) error {
+		assert.NotNil(t, tx)
 		return nil
 	})
 	require.NoError(t, err)

@@ -2,18 +2,33 @@ package main
 
 import (
 	"context"
+	"path/filepath"
 
 	"golang.org/x/sync/errgroup"
 
 	"github.com/hiroara/drawin/client"
+	"github.com/hiroara/drawin/database"
 	"github.com/hiroara/drawin/downloader"
 	"github.com/hiroara/drawin/reader"
 	"github.com/hiroara/drawin/reporter"
 )
 
-func start(ctx context.Context, paths []string, reportPath string) error {
-	cli := client.New(outdir)
-	if err := cli.CreateDir(); err != nil {
+func start(ctx context.Context, paths []string, outdir, reportPath string, useStore bool, concurrency int) error {
+	var out client.Output
+	if useStore {
+		db, err := database.Open(filepath.Join(outdir, "drawin.db"))
+		if err != nil {
+			return err
+		}
+		defer db.Close()
+
+		out = client.NewStore(db)
+	} else {
+		out = client.NewDirectory(outdir)
+	}
+
+	cli, err := client.Build(out)
+	if err != nil {
 		return err
 	}
 

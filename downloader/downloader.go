@@ -2,6 +2,7 @@ package downloader
 
 import (
 	"context"
+	"os"
 
 	"github.com/hiroara/carbo/flow"
 	"github.com/hiroara/carbo/pipe"
@@ -14,7 +15,8 @@ import (
 
 type Downloader struct {
 	client      Client
-	cache       *database.DB
+	cache       *database.SingleDB[*job.Job]
+	cacheFile   *os.File
 	concurrency int
 	out         chan *job.Job
 }
@@ -36,14 +38,21 @@ func New(cli Client) (*Downloader, error) {
 		buffer:      64,
 	}
 
-	cacheDB, err := database.Open(cacheBucket)
+	f, err := os.CreateTemp("", "drawin-*.db")
 	if err != nil {
 		return nil, err
 	}
 
+	cacheDB, err := database.Open(f.Name())
+	if err != nil {
+		return nil, err
+	}
+	cacheSDB, err := database.Single[*job.Job](cacheDB, cacheBucket)
+
 	return &Downloader{
 		client:      cli,
-		cache:       cacheDB,
+		cache:       cacheSDB,
+		cacheFile:   f,
 		concurrency: cfg.concurrency,
 		out:         make(chan *job.Job, cfg.buffer),
 	}, nil
@@ -80,7 +89,7 @@ func (d *Downloader) downloadFlow(urls <-chan string) (*flow.Flow, error) {
 		urlBatches.AsTask(),
 		pipe.Map(func(ctx context.Context, urls []string) ([]*job.Job, error) {
 			jobs := make([]*job.Job, 0, len(urls))
-			err := database.Update(d.cache, func(buc *database.Bucket[*job.Job]) error {
+			err := d.cache.Update(func(buc *database.Bucket[*job.Job]) error {
 				s := job.NewStore(buc)
 				for _, u := range urls {
 					j, err := s.CreateJob(u)
@@ -113,7 +122,7 @@ func (d *Downloader) downloadFlow(urls <-chan string) (*flow.Flow, error) {
 	jobs = task.Connect(
 		jobs.AsTask(),
 		pipe.Tap(func(ctx context.Context, j *job.Job) error {
-			return database.Update(d.cache, func(buc *database.Bucket[*job.Job]) error { return job.NewStore(buc).Put(j) })
+			return d.cache.Update(func(buc *database.Bucket[*job.Job]) error { return job.NewStore(buc).Put(j) })
 		}).AsTask(),
 		0,
 	)
@@ -131,5 +140,7 @@ func (d *Downloader) downloadFlow(urls <-chan string) (*flow.Flow, error) {
 
 func (d *Downloader) Close() error {
 	close(d.out)
+	d.cacheFile.Close()
+	os.Remove(d.cacheFile.Name())
 	return nil
 }

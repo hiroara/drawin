@@ -18,27 +18,12 @@ import (
 	"github.com/hiroara/drawin/job"
 )
 
-func TestCreateDir(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), "test-out")
-	cli := client.New(dir)
-
-	_, err := os.Stat(dir)
-	require.ErrorIs(t, err, os.ErrNotExist)
-
-	require.NoError(t, cli.CreateDir())
-
-	stat, err := os.Stat(dir)
-	require.NoError(t, err)
-	if assert.NotNil(t, stat) {
-		assert.True(t, stat.IsDir())
-	}
-}
-
 func TestDownload(t *testing.T) {
 	t.Run("ResponseStatusCode=OK", func(t *testing.T) {
-		dir := filepath.Join(t.TempDir(), "test-out")
-		cli := client.New(dir)
-		require.NoError(t, cli.CreateDir())
+		dirpath := filepath.Join(t.TempDir(), "test-out")
+		dir := client.NewDirectory(dirpath)
+		cli, err := client.Build(dir)
+		require.NoError(t, err)
 
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			fmt.Fprintln(w, "Successful")
@@ -46,11 +31,11 @@ func TestDownload(t *testing.T) {
 		defer srv.Close()
 
 		j := &job.Job{Name: "image1.jpg", URL: srv.URL}
-		err := cli.Download(context.Background(), j)
+		err = cli.Download(context.Background(), j)
 		require.NoError(t, err)
 		assert.Equal(t, job.DownloadAction, j.Action)
 
-		f, err := os.Open(filepath.Join(dir, "image1.jpg"))
+		f, err := os.Open(filepath.Join(dirpath, "image1.jpg"))
 		require.NoError(t, err)
 		buf := bytes.NewBuffer(nil)
 		_, err = io.Copy(buf, f)
@@ -60,9 +45,10 @@ func TestDownload(t *testing.T) {
 	})
 
 	t.Run("ResponseStatusCode=NotFound", func(t *testing.T) {
-		dir := filepath.Join(t.TempDir(), "test-out")
-		cli := client.New(dir)
-		require.NoError(t, cli.CreateDir())
+		dirpath := filepath.Join(t.TempDir(), "test-out")
+		dir := client.NewDirectory(dirpath)
+		cli, err := client.Build(dir)
+		require.NoError(t, err)
 
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(404)
@@ -71,12 +57,12 @@ func TestDownload(t *testing.T) {
 		defer srv.Close()
 
 		j := &job.Job{Name: "image1.jpg", URL: srv.URL}
-		err := cli.Download(context.Background(), j)
+		err = cli.Download(context.Background(), j)
 		require.Error(t, err)
 		assert.Empty(t, j.Action)
 		assert.Empty(t, j.ContentLength)
 
-		_, err = os.Stat(filepath.Join(dir, "image1.jpg"))
+		_, err = os.Stat(filepath.Join(dirpath, "image1.jpg"))
 		require.ErrorIs(t, err, os.ErrNotExist)
 	})
 }

@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path"
 
 	"github.com/hiroara/drawin/job"
 )
@@ -15,24 +13,34 @@ import (
 var downloadFailure = errors.New("Download failed.")
 
 type Client struct {
-	dir string
+	out Output
 }
 
-func New(dir string) *Client {
-	return &Client{dir: dir}
+type Output interface {
+	Add(j *job.Job, data []byte) error
+	Check(j *job.Job) (bool, error)
+	Prepare() error
 }
 
-func (d *Client) CreateDir() error {
-	return os.MkdirAll(d.dir, 0755)
+func New(out Output) *Client {
+	return &Client{out: out}
+}
+
+func Build(out Output) (*Client, error) {
+	if err := out.Prepare(); err != nil {
+		return nil, err
+	}
+	return New(out), nil
 }
 
 func (d *Client) Download(ctx context.Context, j *job.Job) error {
-	p := d.fullpath(j.Name)
-
-	_, err := os.Stat(p)
-	if err == nil { // File exists
+	ok, err := d.out.Check(j)
+	if err != nil {
+		return err
+	}
+	if ok {
 		j.Action = job.CacheAction
-		return nil // Bypass
+		return nil
 	}
 
 	resp, err := http.Get(j.URL)
@@ -51,19 +59,11 @@ func (d *Client) Download(ctx context.Context, j *job.Job) error {
 		return err
 	}
 
-	if err := store(p, body); err != nil {
+	if err := d.out.Add(j, body); err != nil {
 		return err
 	}
 	j.Action = job.DownloadAction
 	j.ContentLength = resp.ContentLength
 
 	return nil
-}
-
-func store(p string, data []byte) error {
-	return os.WriteFile(p, data, 0644)
-}
-
-func (d *Client) fullpath(name string) string {
-	return path.Join(d.dir, name)
 }
