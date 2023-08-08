@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/hiroara/carbo/pipe"
+	"github.com/hiroara/carbo/source"
 	"github.com/hiroara/carbo/taskfn"
 	"github.com/hiroara/drawin/reader"
 )
@@ -15,8 +15,10 @@ import (
 func TestRead(t *testing.T) {
 	t.Parallel()
 
-	readFiles := taskfn.SliceToSlice(pipe.FromFn(reader.Read).AsTask())
-	out, err := readFiles(context.Background(), []string{"file.go"})
+	readFiles := taskfn.SourceToSlice(source.FromFn(func(ctx context.Context, out chan<- string) error {
+		return reader.Read(ctx, []string{"file.go"}, out)
+	}))
+	out, err := readFiles(context.Background())
 	require.NoError(t, err)
 	assert.Contains(t, out, "package reader")
 }
