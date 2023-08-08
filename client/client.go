@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/hiroara/drawin/job"
+	"github.com/hiroara/drawin/reporter"
 )
 
 var downloadFailure = errors.New("Download failed.")
@@ -33,37 +34,36 @@ func Build(out Output) (*Client, error) {
 	return New(out), nil
 }
 
-func (d *Client) Download(ctx context.Context, j *job.Job) error {
+var ErrUnexpectedResponseStatus = errors.New("received unexpected HTTP response status code")
+
+func (d *Client) Download(ctx context.Context, j *job.Job) (*reporter.Report, error) {
 	ok, err := d.out.Check(j)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if ok {
-		j.Action = job.CacheAction
-		return nil
+		return reporter.CachedReport(j), nil
 	}
 
 	resp, err := http.Get(j.URL)
 	if err != nil {
-		return err
+		return reporter.FailedReport(j, err), nil
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 300 {
-		return fmt.Errorf("%w Unexpected response status code: %d", downloadFailure, resp.StatusCode)
+		return reporter.FailedReport(j, fmt.Errorf("%w: %d", ErrUnexpectedResponseStatus, resp.StatusCode)), nil
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return reporter.FailedReport(j, err), nil
 	}
 
 	if err := d.out.Add(j, body); err != nil {
-		return err
+		return nil, err
 	}
-	j.Action = job.DownloadAction
-	j.ContentLength = resp.ContentLength
 
-	return nil
+	return reporter.DownloadedReport(j, resp.ContentLength), nil
 }

@@ -16,6 +16,7 @@ import (
 
 	"github.com/hiroara/drawin/client"
 	"github.com/hiroara/drawin/job"
+	"github.com/hiroara/drawin/reporter"
 )
 
 func TestDownload(t *testing.T) {
@@ -31,9 +32,10 @@ func TestDownload(t *testing.T) {
 		defer srv.Close()
 
 		j := &job.Job{Name: "image1.jpg", URL: srv.URL}
-		err = cli.Download(context.Background(), j)
+		rep, err := cli.Download(context.Background(), j)
 		require.NoError(t, err)
-		assert.Equal(t, job.DownloadAction, j.Action)
+		assert.Equal(t, *j, rep.Job)
+		assert.Equal(t, reporter.Downloaded, rep.Result)
 
 		f, err := os.Open(filepath.Join(dirpath, "image1.jpg"))
 		require.NoError(t, err)
@@ -41,7 +43,12 @@ func TestDownload(t *testing.T) {
 		_, err = io.Copy(buf, f)
 		require.NoError(t, err)
 		assert.Equal(t, "Successful\n", buf.String())
-		assert.Equal(t, int64(11), j.ContentLength)
+		assert.Equal(t, int64(11), rep.ContentLength)
+
+		rep, err = cli.Download(context.Background(), j)
+		require.NoError(t, err)
+		assert.Equal(t, *j, rep.Job)
+		assert.Equal(t, reporter.Cached, rep.Result)
 	})
 
 	t.Run("ResponseStatusCode=NotFound", func(t *testing.T) {
@@ -57,10 +64,9 @@ func TestDownload(t *testing.T) {
 		defer srv.Close()
 
 		j := &job.Job{Name: "image1.jpg", URL: srv.URL}
-		err = cli.Download(context.Background(), j)
-		require.Error(t, err)
-		assert.Empty(t, j.Action)
-		assert.Empty(t, j.ContentLength)
+		rep, err := cli.Download(context.Background(), j)
+		require.NoError(t, err)
+		assert.Equal(t, reporter.Failed, rep.Result)
 
 		_, err = os.Stat(filepath.Join(dirpath, "image1.jpg"))
 		require.ErrorIs(t, err, os.ErrNotExist)

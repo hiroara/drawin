@@ -11,15 +11,16 @@ import (
 
 	"github.com/hiroara/drawin/downloader"
 	"github.com/hiroara/drawin/job"
+	"github.com/hiroara/drawin/reporter"
 )
 
 type dummyClient struct {
 	mock.Mock
 }
 
-func (cli *dummyClient) Download(ctx context.Context, j *job.Job) error {
+func (cli *dummyClient) Download(ctx context.Context, j *job.Job) (*reporter.Report, error) {
 	args := cli.Mock.Called(ctx, j)
-	return args.Error(0)
+	return args.Get(0).(*reporter.Report), args.Error(1)
 }
 
 func TestDownloader(t *testing.T) {
@@ -47,8 +48,8 @@ func TestDownloader(t *testing.T) {
 		return j.URL == urls[1]
 	})
 
-	cli.On("Download", mock.Anything, jobExpectation1).Return(nil).Once()
-	cli.On("Download", mock.Anything, jobExpectation2).Return(nil).Once()
+	cli.On("Download", mock.Anything, jobExpectation1).Return(reporter.DownloadedReport(&job.Job{Name: "image1.jpg", URL: urls[0]}, 1024), nil).Once()
+	cli.On("Download", mock.Anything, jobExpectation2).Return(reporter.DownloadedReport(&job.Job{Name: "image2.jpg", URL: urls[1]}, 1024), nil).Once()
 
 	ctx := context.Background()
 	grp, ctx := errgroup.WithContext(ctx)
@@ -60,8 +61,8 @@ func TestDownloader(t *testing.T) {
 
 	grp.Go(func() error {
 		results := make([]string, 0)
-		for j := range d.Output() {
-			results = append(results, j.URL)
+		for rep := range d.Output() {
+			results = append(results, rep.URL)
 		}
 		assert.ElementsMatch(t, urls, results)
 		return nil

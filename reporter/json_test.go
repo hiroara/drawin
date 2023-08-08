@@ -14,12 +14,14 @@ import (
 )
 
 func TestJSONReporter(t *testing.T) {
+	t.Parallel()
+
 	path := filepath.Join(t.TempDir(), "report.jsonl")
 	rep, err := reporter.OpenJSON(path)
 	require.NoError(t, err)
 
-	rep.Write(&job.Job{Name: "image1.jpg"})
-	rep.Write(&job.Job{Name: "image2.jpg"})
+	rep.Write(reporter.DownloadedReport(&job.Job{Name: "image1.jpg"}, 256))
+	rep.Write(reporter.CachedReport(&job.Job{Name: "image2.jpg"}))
 
 	require.NoError(t, rep.Close())
 
@@ -28,5 +30,5 @@ func TestJSONReporter(t *testing.T) {
 	bs, err := io.ReadAll(f)
 	require.NoError(t, err)
 
-	assert.Equal(t, "{\"url\":\"\",\"name\":\"image1.jpg\",\"contentLength\":0,\"action\":\"\"}\n{\"url\":\"\",\"name\":\"image2.jpg\",\"contentLength\":0,\"action\":\"\"}\n", string(bs))
+	assert.Equal(t, "{\"job\":{\"url\":\"\",\"name\":\"image1.jpg\"},\"result\":\"downloaded\",\"contentLength\":256}\n{\"job\":{\"url\":\"\",\"name\":\"image2.jpg\"},\"result\":\"cached\"}\n", string(bs))
 }

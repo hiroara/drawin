@@ -11,6 +11,7 @@ import (
 	"github.com/hiroara/carbo/task"
 	"github.com/hiroara/drawin/database"
 	"github.com/hiroara/drawin/job"
+	"github.com/hiroara/drawin/reporter"
 )
 
 type Downloader struct {
@@ -18,7 +19,7 @@ type Downloader struct {
 	cache       *database.SingleDB[*job.Job]
 	cacheFile   *os.File
 	concurrency int
-	out         chan *job.Job
+	out         chan *reporter.Report
 }
 
 type config struct {
@@ -27,7 +28,7 @@ type config struct {
 }
 
 type Client interface {
-	Download(ctx context.Context, j *job.Job) error
+	Download(ctx context.Context, j *job.Job) (*reporter.Report, error)
 }
 
 var cacheBucket = []byte("drawin-cache")
@@ -54,11 +55,11 @@ func New(cli Client) (*Downloader, error) {
 		cache:       cacheSDB,
 		cacheFile:   f,
 		concurrency: cfg.concurrency,
-		out:         make(chan *job.Job, cfg.buffer),
+		out:         make(chan *reporter.Report, cfg.buffer),
 	}, nil
 }
 
-func (d *Downloader) Output() <-chan *job.Job {
+func (d *Downloader) Output() <-chan *reporter.Report {
 	return d.out
 }
 
@@ -114,23 +115,16 @@ func (d *Downloader) downloadFlow(urls <-chan string) (*flow.Flow, error) {
 		pipe.FlattenSlice[*job.Job]().AsTask(),
 		0,
 	)
-	jobs = task.Connect(
-		jobs.AsTask(),
-		pipe.Tap(d.client.Download).Concurrent(d.concurrency).AsTask(),
-		0,
-	)
-	jobs = task.Connect(
-		jobs.AsTask(),
-		pipe.Tap(func(ctx context.Context, j *job.Job) error {
-			return d.cache.Update(func(buc *database.Bucket[*job.Job]) error { return job.NewStore(buc).Put(j) })
-		}).AsTask(),
+	reps := task.Connect(
+		jobs,
+		pipe.Map(d.client.Download).Concurrent(d.concurrency).AsTask(),
 		0,
 	)
 
 	sin := task.Connect(
-		jobs.AsTask(),
-		sink.ElementWise(func(ctx context.Context, j *job.Job) error {
-			return task.Emit(ctx, d.out, j)
+		reps.AsTask(),
+		sink.ElementWise(func(ctx context.Context, rep *reporter.Report) error {
+			return task.Emit(ctx, d.out, rep)
 		}).AsTask(),
 		0,
 	)
