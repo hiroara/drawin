@@ -12,6 +12,7 @@ import (
 	"github.com/hiroara/drawin/client"
 	"github.com/hiroara/drawin/database"
 	"github.com/hiroara/drawin/job"
+	"github.com/hiroara/drawin/reporter"
 )
 
 func TestStoreOutput(t *testing.T) {
@@ -26,12 +27,13 @@ func TestStoreOutput(t *testing.T) {
 	require.NoError(t, out.Prepare())
 
 	j := &job.Job{Name: "file1.txt"}
+	data := []byte("test value")
 
-	ok, err := out.Check(j)
+	rep, err := out.Get(j)
 	require.NoError(t, err)
-	assert.False(t, ok)
+	assert.Nil(t, rep)
 
-	require.NoError(t, out.Add(j, []byte("test value")))
+	require.NoError(t, out.Add(reporter.DownloadedReport(j, int64(len(data))), data))
 
 	require.NoError(t, db.View(func(tx *bolt.Tx) error {
 		imgs := tx.Bucket([]byte("images"))
@@ -40,13 +42,16 @@ func TestStoreOutput(t *testing.T) {
 
 		reps := tx.Bucket([]byte("reports"))
 		bs := reps.Get([]byte(j.Name))
-		j, err := marshal.Gob[*job.Job]().Unmarshal(bs)
+		rep, err := marshal.Gob[*reporter.Report]().Unmarshal(bs)
 		require.NoError(t, err)
-		assert.Equal(t, "file1.txt", j.Name)
+		assert.Equal(t, "file1.txt", rep.Name)
 		return nil
 	}))
 
-	ok, err = out.Check(j)
+	rep, err = out.Get(j)
 	require.NoError(t, err)
-	assert.True(t, ok)
+	if assert.NotNil(t, rep) {
+		assert.Equal(t, reporter.Cached, rep.Result)
+		assert.Equal(t, int64(len(data)), rep.ContentLength)
+	}
 }

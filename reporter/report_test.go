@@ -29,11 +29,11 @@ func TestCachedReport(t *testing.T) {
 
 	j := &job.Job{Name: "image1.jpg"}
 
-	dr := reporter.CachedReport(j)
+	dr := reporter.CachedReport(j, 512)
 	if assert.NotNil(t, dr) {
 		assert.Equal(t, *j, dr.Job)
 		assert.Equal(t, reporter.Cached, dr.Result)
-		assert.Empty(t, dr.ContentLength)
+		assert.Equal(t, int64(512), dr.ContentLength)
 		assert.Empty(t, dr.Error)
 	}
 }

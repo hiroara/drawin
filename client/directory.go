@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/hiroara/drawin/job"
+	"github.com/hiroara/drawin/reporter"
 )
 
 type DirectoryOutput struct {
@@ -16,19 +17,19 @@ func NewDirectory(dir string) *DirectoryOutput {
 	return &DirectoryOutput{dir: dir}
 }
 
-func (out *DirectoryOutput) Add(j *job.Job, data []byte) error {
-	return os.WriteFile(out.fullpath(j.Name), data, 0644)
+func (out *DirectoryOutput) Add(rep *reporter.Report, data []byte) error {
+	return os.WriteFile(out.fullpath(rep.Name), data, 0644)
 }
 
-func (out *DirectoryOutput) Check(j *job.Job) (bool, error) {
-	_, err := os.Stat(out.fullpath(j.Name))
+func (out *DirectoryOutput) Get(j *job.Job) (*reporter.Report, error) {
+	stat, err := os.Stat(out.fullpath(j.Name))
 	if err == nil { // File exists
-		return true, nil // Bypass
+		return reporter.CachedReport(j, stat.Size()), nil
 	}
 	if errors.Is(err, os.ErrNotExist) {
-		return false, nil
+		return nil, nil
 	}
-	return false, err
+	return nil, err
 }
 
 func (out *DirectoryOutput) Prepare() error {

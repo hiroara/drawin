@@ -11,6 +11,7 @@ import (
 
 	"github.com/hiroara/drawin/client"
 	"github.com/hiroara/drawin/job"
+	"github.com/hiroara/drawin/reporter"
 )
 
 func TestDirectoryOutput(t *testing.T) {
@@ -21,20 +22,24 @@ func TestDirectoryOutput(t *testing.T) {
 	require.NoError(t, out.Prepare())
 
 	j := &job.Job{Name: "file1.txt"}
+	data := []byte("test value")
 
-	ok, err := out.Check(j)
+	rep, err := out.Get(j)
 	require.NoError(t, err)
-	assert.False(t, ok)
+	assert.Nil(t, rep)
 
-	require.NoError(t, out.Add(j, []byte("test value")))
+	require.NoError(t, out.Add(reporter.DownloadedReport(j, int64(len(data))), data))
 
 	f, err := os.Open(filepath.Join(dir, "file1.txt"))
 	assert.NoError(t, err)
 	bs, err := io.ReadAll(f)
 	assert.NoError(t, err)
-	assert.Equal(t, []byte("test value"), bs)
+	assert.Equal(t, data, bs)
 
-	ok, err = out.Check(j)
+	rep, err = out.Get(j)
 	require.NoError(t, err)
-	assert.True(t, ok)
+	if assert.NotNil(t, rep) {
+		assert.Equal(t, reporter.Cached, rep.Result)
+		assert.Equal(t, int64(len(data)), rep.ContentLength)
+	}
 }

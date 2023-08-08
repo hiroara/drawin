@@ -6,6 +6,7 @@ import (
 
 	"github.com/hiroara/drawin/database"
 	"github.com/hiroara/drawin/job"
+	"github.com/hiroara/drawin/reporter"
 )
 
 type StoreOutput struct {
@@ -15,37 +16,45 @@ type StoreOutput struct {
 var imageBucket = []byte("images")
 var reportBucket = []byte("reports")
 
-var jobMarshaller = marshal.Gob[*job.Job]()
+var reportMarshaller = marshal.Gob[*reporter.Report]()
 
 func NewStore(db *database.DB) *StoreOutput {
 	return &StoreOutput{db: db}
 }
 
-func (out *StoreOutput) Add(j *job.Job, data []byte) error {
-	bs, err := jobMarshaller.Marshal(j)
+func (out *StoreOutput) Add(rep *reporter.Report, data []byte) error {
+	bs, err := reportMarshaller.Marshal(rep)
 	if err != nil {
 		return err
 	}
 
 	return out.db.Update(func(tx *bolt.Tx) error {
 		imgBuc := tx.Bucket(imageBucket)
-		if err := imgBuc.Put([]byte(j.Name), data); err != nil {
+		if err := imgBuc.Put([]byte(rep.Name), data); err != nil {
 			return err
 		}
 		repBuc := tx.Bucket(reportBucket)
-		return repBuc.Put([]byte(j.Name), bs)
+		return repBuc.Put([]byte(rep.Name), bs)
 	})
 }
 
-func (out *StoreOutput) Check(j *job.Job) (bool, error) {
-	var ok bool
+func (out *StoreOutput) Get(j *job.Job) (*reporter.Report, error) {
+	var rep *reporter.Report
 	err := out.db.View(func(tx *bolt.Tx) error {
 		repBuc := tx.Bucket(reportBucket)
 		bs := repBuc.Get([]byte(j.Name))
-		ok = bs != nil
+		if bs == nil {
+			return nil
+		}
+		r, err := reportMarshaller.Unmarshal(bs)
+		if err != nil {
+			return err
+		}
+		r.Result = reporter.Cached
+		rep = r
 		return nil
 	})
-	return ok, err
+	return rep, err
 }
 
 func (out *StoreOutput) Prepare() error {

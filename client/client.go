@@ -18,8 +18,8 @@ type Client struct {
 }
 
 type Output interface {
-	Add(j *job.Job, data []byte) error
-	Check(j *job.Job) (bool, error)
+	Add(*reporter.Report, []byte) error
+	Get(*job.Job) (*reporter.Report, error)
 	Prepare() error
 }
 
@@ -37,12 +37,12 @@ func Build(out Output) (*Client, error) {
 var ErrUnexpectedResponseStatus = errors.New("received unexpected HTTP response status code")
 
 func (d *Client) Download(ctx context.Context, j *job.Job) (*reporter.Report, error) {
-	ok, err := d.out.Check(j)
+	rep, err := d.out.Get(j)
 	if err != nil {
 		return nil, err
 	}
-	if ok {
-		return reporter.CachedReport(j), nil
+	if rep != nil {
+		return rep, nil
 	}
 
 	resp, err := http.Get(j.URL)
@@ -61,9 +61,11 @@ func (d *Client) Download(ctx context.Context, j *job.Job) (*reporter.Report, er
 		return reporter.FailedReport(j, err), nil
 	}
 
-	if err := d.out.Add(j, body); err != nil {
+	rep = reporter.DownloadedReport(j, resp.ContentLength)
+
+	if err := d.out.Add(rep, body); err != nil {
 		return nil, err
 	}
 
-	return reporter.DownloadedReport(j, resp.ContentLength), nil
+	return rep, nil
 }

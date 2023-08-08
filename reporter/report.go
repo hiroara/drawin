@@ -13,8 +13,8 @@ func DownloadedReport(j *job.Job, contentLength int64) *Report {
 	return &Report{Job: *j, Result: Downloaded, ContentLength: contentLength}
 }
 
-func CachedReport(j *job.Job) *Report {
-	return &Report{Job: *j, Result: Cached}
+func CachedReport(j *job.Job, contentLength int64) *Report {
+	return &Report{Job: *j, Result: Cached, ContentLength: contentLength}
 }
 
 func FailedReport(j *job.Job, err error) *Report {
