@@ -11,6 +11,7 @@ import (
 	"github.com/hiroara/drawin/downloader"
 	"github.com/hiroara/drawin/reader"
 	"github.com/hiroara/drawin/reporter"
+	"github.com/hiroara/drawin/store"
 )
 
 func start(ctx context.Context, paths []string, outdir, reportPath string, useStore bool, concurrency int) error {
@@ -22,7 +23,7 @@ func start(ctx context.Context, paths []string, outdir, reportPath string, useSt
 		}
 		defer db.Close()
 
-		out = client.NewStore(db)
+		out = store.New(db)
 	} else {
 		out = client.NewDirectory(outdir)
 	}

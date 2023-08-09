@@ -19,7 +19,7 @@ func TestDirectoryOutput(t *testing.T) {
 
 	dir := filepath.Join(t.TempDir(), "out")
 	out := client.NewDirectory(dir)
-	require.NoError(t, out.Prepare())
+	require.NoError(t, out.Initialize())
 
 	j := &job.Job{Name: "file1.txt"}
 	data := []byte("test value")

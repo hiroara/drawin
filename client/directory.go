@@ -32,7 +32,7 @@ func (out *DirectoryOutput) Get(j *job.Job) (*reporter.Report, error) {
 	return nil, err
 }
 
-func (out *DirectoryOutput) Prepare() error {
+func (out *DirectoryOutput) Initialize() error {
 	return os.MkdirAll(out.dir, 0755)
 }
 

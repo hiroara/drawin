@@ -27,7 +27,7 @@ var DefaultHandlers = []Handler{&HTTPHandler{client: http.DefaultClient}}
 type Output interface {
 	Add(*reporter.Report, []byte) error
 	Get(*job.Job) (*reporter.Report, error)
-	Prepare() error
+	Initialize() error
 }
 
 func New(out Output, opts ...Option) *Client {
@@ -39,7 +39,7 @@ func New(out Output, opts ...Option) *Client {
 }
 
 func Build(out Output, opts ...Option) (*Client, error) {
-	if err := out.Prepare(); err != nil {
+	if err := out.Initialize(); err != nil {
 		return nil, err
 	}
 	return New(out, opts...), nil
@@ -53,6 +53,7 @@ func (d *Client) Download(ctx context.Context, j *job.Job) (*reporter.Report, er
 		return nil, err
 	}
 	if rep != nil {
+		rep.Result = reporter.Cached
 		return rep, nil
 	}
 

@@ -1,4 +1,4 @@
-package client_test
+package store_test
 
 import (
 	"path/filepath"
@@ -9,13 +9,13 @@ import (
 	bolt "go.etcd.io/bbolt"
 
 	"github.com/hiroara/carbo/marshal"
-	"github.com/hiroara/drawin/client"
 	"github.com/hiroara/drawin/database"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/reporter"
+	"github.com/hiroara/drawin/store"
 )
 
-func TestStoreOutput(t *testing.T) {
+func TestStore(t *testing.T) {
 	t.Parallel()
 
 	path := filepath.Join(t.TempDir(), "out", "test.db")
@@ -23,22 +23,22 @@ func TestStoreOutput(t *testing.T) {
 	require.NoError(t, err)
 	defer db.Close()
 
-	out := client.NewStore(db)
-	require.NoError(t, out.Prepare())
+	s := store.New(db)
+	require.NoError(t, s.Initialize())
 
 	j := &job.Job{Name: "file1.txt", URL: "https://example.com/dir/file1.txt"}
 	data := []byte("test value")
 
-	rep, err := out.Get(j)
+	rep, err := s.Get(j)
 	require.NoError(t, err)
 	assert.Nil(t, rep)
 
-	require.NoError(t, out.Add(reporter.DownloadedReport(j, int64(len(data))), data))
+	require.NoError(t, s.Add(reporter.DownloadedReport(j, int64(len(data))), data))
 
 	require.NoError(t, db.View(func(tx *bolt.Tx) error {
 		imgs := tx.Bucket([]byte("images"))
 		v := imgs.Get([]byte(j.URL))
-		assert.Equal(t, []byte("test value"), v)
+		assert.Equal(t, data, v)
 
 		reps := tx.Bucket([]byte("reports"))
 		bs := reps.Get([]byte(j.URL))
@@ -48,10 +48,16 @@ func TestStoreOutput(t *testing.T) {
 		return nil
 	}))
 
-	rep, err = out.Get(j)
+	rep, err = s.Get(j)
 	require.NoError(t, err)
 	if assert.NotNil(t, rep) {
-		assert.Equal(t, reporter.Cached, rep.Result)
+		assert.Equal(t, reporter.Downloaded, rep.Result)
 		assert.Equal(t, int64(len(data)), rep.ContentLength)
+	}
+
+	bs, err := s.Read(rep)
+	require.NoError(t, err)
+	if assert.NotNil(t, bs) {
+		assert.Equal(t, data, bs)
 	}
 }
