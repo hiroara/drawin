@@ -54,10 +54,7 @@ func TestDownloader(t *testing.T) {
 	ctx := context.Background()
 	grp, ctx := errgroup.WithContext(ctx)
 
-	grp.Go(func() error {
-		defer d.Close()
-		return d.Run(ctx, urlsC)
-	})
+	grp.Go(func() error { return d.Run(ctx, urlsC) })
 
 	grp.Go(func() error {
 		results := make([]string, 0)

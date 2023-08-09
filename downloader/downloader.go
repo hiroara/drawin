@@ -73,14 +73,7 @@ func (d *Downloader) Run(ctx context.Context, urls <-chan string) error {
 }
 
 func (d *Downloader) downloadFlow(urls <-chan string) (*flow.Flow, error) {
-	src := source.FromFn(func(ctx context.Context, out chan<- string) error {
-		for url := range urls {
-			if err := task.Emit(ctx, out, url); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	src := source.FromChan(urls)
 	urlBatches := task.Connect(
 		src.AsTask(),
 		pipe.Batch[string](32).AsTask(),
@@ -123,9 +116,7 @@ func (d *Downloader) downloadFlow(urls <-chan string) (*flow.Flow, error) {
 
 	sin := task.Connect(
 		reps.AsTask(),
-		sink.ElementWise(func(ctx context.Context, rep *reporter.Report) error {
-			return task.Emit(ctx, d.out, rep)
-		}).AsTask(),
+		sink.ToChan(d.out).AsTask(),
 		0,
 	)
 
@@ -133,7 +124,6 @@ func (d *Downloader) downloadFlow(urls <-chan string) (*flow.Flow, error) {
 }
 
 func (d *Downloader) Close() error {
-	close(d.out)
 	d.cacheFile.Close()
 	os.Remove(d.cacheFile.Name())
 	return nil
