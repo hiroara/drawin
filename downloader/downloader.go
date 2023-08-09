@@ -19,7 +19,7 @@ type Downloader struct {
 	cache       *database.SingleDB[*job.Job]
 	cacheFile   *os.File
 	concurrency int
-	out         chan *reporter.Report
+	out         chan<- *reporter.Report
 }
 
 type config struct {
@@ -33,7 +33,7 @@ type Client interface {
 
 var cacheBucket = []byte("drawin-cache")
 
-func New(cli Client) (*Downloader, error) {
+func New(cli Client, out chan<- *reporter.Report) (*Downloader, error) {
 	cfg := &config{
 		concurrency: 4,
 		buffer:      64,
@@ -55,12 +55,8 @@ func New(cli Client) (*Downloader, error) {
 		cache:       cacheSDB,
 		cacheFile:   f,
 		concurrency: cfg.concurrency,
-		out:         make(chan *reporter.Report, cfg.buffer),
+		out:         out,
 	}, nil
-}
-
-func (d *Downloader) Output() <-chan *reporter.Report {
-	return d.out
 }
 
 func (d *Downloader) Run(ctx context.Context, urls <-chan string) error {

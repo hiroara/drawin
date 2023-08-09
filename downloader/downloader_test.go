@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/hiroara/drawin/downloader"
 	"github.com/hiroara/drawin/job"
@@ -32,7 +31,9 @@ func TestDownloader(t *testing.T) {
 	}
 
 	cli := new(dummyClient)
-	d, err := downloader.New(cli)
+	out := make(chan *reporter.Report, 2)
+
+	d, err := downloader.New(cli, out)
 	require.NoError(t, err)
 
 	urlsC := make(chan string, 2)
@@ -52,20 +53,14 @@ func TestDownloader(t *testing.T) {
 	cli.On("Download", mock.Anything, jobExpectation2).Return(reporter.DownloadedReport(&job.Job{Name: "image2.jpg", URL: urls[1]}, 1024), nil).Once()
 
 	ctx := context.Background()
-	grp, ctx := errgroup.WithContext(ctx)
 
-	grp.Go(func() error { return d.Run(ctx, urlsC) })
+	require.NoError(t, d.Run(ctx, urlsC))
 
-	grp.Go(func() error {
-		results := make([]string, 0)
-		for rep := range d.Output() {
-			results = append(results, rep.URL)
-		}
-		assert.ElementsMatch(t, urls, results)
-		return nil
-	})
-
-	require.NoError(t, grp.Wait())
+	results := make([]string, 0)
+	for rep := range out {
+		results = append(results, rep.URL)
+	}
+	assert.ElementsMatch(t, urls, results)
 
 	cli.AssertExpectations(t)
 }

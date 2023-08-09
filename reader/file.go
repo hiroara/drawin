@@ -9,16 +9,7 @@ import (
 	"github.com/hiroara/carbo/task"
 )
 
-func Read(ctx context.Context, paths []string, out chan<- string) error {
-	for _, path := range paths {
-		if err := read(ctx, path, out); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func read(ctx context.Context, path string, out chan<- string) error {
+func Read(ctx context.Context, path string, out chan<- string) error {
 	r, err := open(path)
 	if err != nil {
 		return err

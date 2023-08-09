@@ -16,7 +16,7 @@ func TestRead(t *testing.T) {
 	t.Parallel()
 
 	readFiles := taskfn.SourceToSlice(source.FromFn(func(ctx context.Context, out chan<- string) error {
-		return reader.Read(ctx, []string{"file.go"}, out)
+		return reader.Read(ctx, "file.go", out)
 	}))
 	out, err := readFiles(context.Background())
 	require.NoError(t, err)

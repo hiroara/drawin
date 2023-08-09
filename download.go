@@ -4,6 +4,11 @@ import (
 	"context"
 	"path/filepath"
 
+	"github.com/hiroara/carbo/flow"
+	"github.com/hiroara/carbo/pipe"
+	"github.com/hiroara/carbo/sink"
+	"github.com/hiroara/carbo/source"
+	"github.com/hiroara/carbo/task"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/hiroara/drawin/client"
@@ -14,12 +19,12 @@ import (
 	"github.com/hiroara/drawin/store"
 )
 
-func start(ctx context.Context, paths []string, outdir, reportPath string, useStore bool, concurrency int) error {
+func download(paths []string, outdir, reportPath string, useStore bool, concurrency int) (*flow.Flow, error) {
 	var out client.Output
 	if useStore {
 		db, err := database.Open(filepath.Join(outdir, "drawin.db"))
 		if err != nil {
-			return err
+			return nil, err
 		}
 		defer db.Close()
 
@@ -30,40 +35,61 @@ func start(ctx context.Context, paths []string, outdir, reportPath string, useSt
 
 	cli, err := client.Build(out)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	d, err := downloader.New(cli)
+	repr, err := reporter.OpenJSON(reportPath)
 	if err != nil {
-		return err
-	}
-	grp, ctx := errgroup.WithContext(ctx)
-
-	urls := make(chan string)
-
-	rep, err := reporter.OpenJSON(reportPath)
-	if err != nil {
-		return err
+		return nil, err
 	}
 
-	grp.Go(func() error {
-		defer close(urls)
-		return reader.Read(ctx, paths, urls)
-	})
+	src := source.FromSlice(paths)
 
-	grp.Go(func() error {
-		defer d.Close()
-		return d.Run(ctx, urls)
-	})
+	urls := task.Connect(
+		src.AsTask(),
+		pipe.FromFn(func(ctx context.Context, in <-chan string, out chan<- string) error {
+			for path := range in {
+				if err := reader.Read(ctx, path, out); err != nil {
+					return err
+				}
+			}
+			return nil
+		}).AsTask(),
+		0,
+	)
 
-	grp.Go(func() error {
-		for j := range d.Output() {
-			if err := rep.Write(j); err != nil {
+	reps := task.Connect(
+		urls,
+		pipe.FromFn(func(ctx context.Context, in <-chan string, out chan<- *reporter.Report) error {
+			m := make(chan *reporter.Report)
+
+			d, err := downloader.New(cli, m)
+			if err != nil {
 				return err
 			}
-		}
-		return nil
-	})
 
-	return grp.Wait()
+			grp, ctx := errgroup.WithContext(ctx)
+
+			grp.Go(func() error { return d.Run(ctx, in) })
+			grp.Go(func() error {
+				for rep := range m {
+					if err := task.Emit(ctx, out, rep); err != nil {
+						return err
+					}
+				}
+				return nil
+			})
+
+			return grp.Wait()
+		}).AsTask(),
+		32,
+	)
+
+	sin := task.Connect(
+		reps,
+		sink.ElementWise(func(ctx context.Context, rep *reporter.Report) error { return repr.Write(rep) }).AsTask(),
+		0,
+	)
+
+	return flow.FromTask(sin), nil
 }

@@ -23,7 +23,7 @@ func OpenJSON(path string) (Reporter, error) {
 		return NewJSON(os.Stdout), nil
 	}
 
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_EXCL|os.O_CREATE, 0666)
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return nil, err
 	}
