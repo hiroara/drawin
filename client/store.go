@@ -30,11 +30,11 @@ func (out *StoreOutput) Add(rep *reporter.Report, data []byte) error {
 
 	return out.db.Update(func(tx *bolt.Tx) error {
 		imgBuc := tx.Bucket(imageBucket)
-		if err := imgBuc.Put([]byte(rep.Name), data); err != nil {
+		if err := imgBuc.Put([]byte(rep.URL), data); err != nil {
 			return err
 		}
 		repBuc := tx.Bucket(reportBucket)
-		return repBuc.Put([]byte(rep.Name), bs)
+		return repBuc.Put([]byte(rep.URL), bs)
 	})
 }
 
@@ -42,7 +42,7 @@ func (out *StoreOutput) Get(j *job.Job) (*reporter.Report, error) {
 	var rep *reporter.Report
 	err := out.db.View(func(tx *bolt.Tx) error {
 		repBuc := tx.Bucket(reportBucket)
-		bs := repBuc.Get([]byte(j.Name))
+		bs := repBuc.Get([]byte(j.URL))
 		if bs == nil {
 			return nil
 		}

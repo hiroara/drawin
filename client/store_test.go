@@ -26,7 +26,7 @@ func TestStoreOutput(t *testing.T) {
 	out := client.NewStore(db)
 	require.NoError(t, out.Prepare())
 
-	j := &job.Job{Name: "file1.txt"}
+	j := &job.Job{Name: "file1.txt", URL: "https://example.com/dir/file1.txt"}
 	data := []byte("test value")
 
 	rep, err := out.Get(j)
@@ -37,11 +37,11 @@ func TestStoreOutput(t *testing.T) {
 
 	require.NoError(t, db.View(func(tx *bolt.Tx) error {
 		imgs := tx.Bucket([]byte("images"))
-		v := imgs.Get([]byte(j.Name))
+		v := imgs.Get([]byte(j.URL))
 		assert.Equal(t, []byte("test value"), v)
 
 		reps := tx.Bucket([]byte("reports"))
-		bs := reps.Get([]byte(j.Name))
+		bs := reps.Get([]byte(j.URL))
 		rep, err := marshal.Gob[*reporter.Report]().Unmarshal(bs)
 		require.NoError(t, err)
 		assert.Equal(t, "file1.txt", rep.Name)
