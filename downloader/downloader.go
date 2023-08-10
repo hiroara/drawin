@@ -12,6 +12,7 @@ import (
 	"github.com/hiroara/drawin/database"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/reporter"
+	"golang.org/x/sync/errgroup"
 )
 
 type Downloader struct {
@@ -19,7 +20,6 @@ type Downloader struct {
 	cache       *database.SingleDB[*job.Job]
 	cacheFile   *os.File
 	concurrency int
-	out         chan<- *reporter.Report
 }
 
 type config struct {
@@ -33,7 +33,7 @@ type Client interface {
 
 var cacheBucket = []byte("drawin-cache")
 
-func New(cli Client, out chan<- *reporter.Report) (*Downloader, error) {
+func New(cli Client) (*Downloader, error) {
 	cfg := &config{
 		concurrency: 4,
 		buffer:      64,
@@ -55,12 +55,11 @@ func New(cli Client, out chan<- *reporter.Report) (*Downloader, error) {
 		cache:       cacheSDB,
 		cacheFile:   f,
 		concurrency: cfg.concurrency,
-		out:         out,
 	}, nil
 }
 
-func (d *Downloader) Run(ctx context.Context, urls <-chan string) error {
-	f, err := d.downloadFlow(urls)
+func (d *Downloader) Run(ctx context.Context, urls <-chan string, out chan<- *reporter.Report) error {
+	f, err := d.downloadFlow(urls, out)
 	if err != nil {
 		return err
 	}
@@ -68,7 +67,7 @@ func (d *Downloader) Run(ctx context.Context, urls <-chan string) error {
 	return f.Run(ctx)
 }
 
-func (d *Downloader) downloadFlow(urls <-chan string) (*flow.Flow, error) {
+func (d *Downloader) downloadFlow(urls <-chan string, out chan<- *reporter.Report) (*flow.Flow, error) {
 	src := source.FromChan(urls)
 	urlBatches := task.Connect(
 		src.AsTask(),
@@ -112,7 +111,7 @@ func (d *Downloader) downloadFlow(urls <-chan string) (*flow.Flow, error) {
 
 	sin := task.Connect(
 		reps.AsTask(),
-		sink.ToChan(d.out).AsTask(),
+		sink.ToChan(out).AsTask(),
 		0,
 	)
 
@@ -123,4 +122,25 @@ func (d *Downloader) Close() error {
 	d.cacheFile.Close()
 	os.Remove(d.cacheFile.Name())
 	return nil
+}
+
+func (d *Downloader) AsPipe() pipe.Pipe[string, *reporter.Report] {
+	return pipe.FromFn(func(ctx context.Context, urls <-chan string, out chan<- *reporter.Report) error {
+		m := make(chan *reporter.Report)
+		grp, ctx := errgroup.WithContext(ctx)
+		grp.Go(func() error { return d.Run(ctx, urls, m) })
+		grp.Go(func() error {
+			for rep := range m {
+				if err := task.Emit(ctx, out, rep); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		return grp.Wait()
+	})
+}
+
+func (d *Downloader) AsTask() task.Task[string, *reporter.Report] {
+	return d.AsPipe()
 }

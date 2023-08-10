@@ -8,7 +8,6 @@ import (
 	"github.com/hiroara/carbo/sink"
 	"github.com/hiroara/carbo/source"
 	"github.com/hiroara/carbo/task"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/hiroara/drawin/client"
 	"github.com/hiroara/drawin/database"
@@ -64,33 +63,18 @@ func download(paths []string, outStr, reportPath string, concurrency int) (*flow
 		0,
 	)
 
+	d, err := downloader.New(cli)
+	if err != nil {
+		return nil, err
+	}
+
 	reps := task.Connect(
 		urls,
-		pipe.FromFn(func(ctx context.Context, in <-chan string, out chan<- *reporter.Report) error {
-			m := make(chan *reporter.Report)
-
-			d, err := downloader.New(cli, m)
-			if err != nil {
-				return err
-			}
-
-			grp, ctx := errgroup.WithContext(ctx)
-
-			grp.Go(func() error { return d.Run(ctx, in) })
-			grp.Go(func() error {
-				for rep := range m {
-					if err := task.Emit(ctx, out, rep); err != nil {
-						return err
-					}
-				}
-				return nil
-			})
-
-			return grp.Wait()
-		}).AsTask(),
+		d.AsTask(),
 		32,
 	)
 	reps.Defer(closeOut)
+	reps.Defer(func() { d.Close() })
 
 	sin := task.Connect(
 		reps,
