@@ -17,7 +17,7 @@ func Open(path string) (*DB, error) {
 		return nil, err
 	}
 
-	db, err := bolt.Open(path, 0600, nil)
+	db, err := bolt.Open(path, 0666, nil)
 	if err != nil {
 		return nil, err
 	}

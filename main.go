@@ -14,9 +14,8 @@ import (
 var bucket = []byte("drawin")
 
 var (
-	outdir      string
+	outStr      string
 	reportPath  string
-	useStore    bool
 	concurrency int
 )
 
@@ -36,7 +35,7 @@ func main() {
 	reg.Register(
 		"download",
 		flow.NewFactory(func() (*flow.Flow, error) {
-			return download(downloadFS.Args(), outdir, reportPath, useStore, concurrency)
+			return download(downloadFS.Args(), outStr, reportPath, concurrency)
 		}),
 	)
 
@@ -53,8 +52,11 @@ func init() {
 	}
 
 	downloadFS = flag.NewFlagSet(fmt.Sprintf("%s download", os.Args[0]), flag.ExitOnError)
-	downloadFS.StringVar(&outdir, "outdir", "drawin-out", "path to the directory to download files")
-	downloadFS.BoolVar(&useStore, "store", false, "enable store download mode")
-	downloadFS.StringVar(&reportPath, "report", "-", "path to the file that a download report is written (\"-\" means STDOUT)")
-	downloadFS.IntVar(&concurrency, "concurrency", 6, "number of concurrent connectinos")
+	downloadFS.StringVar(&outStr, "out", "drawin-out", `Output configuration with the format "<type>=<path>".
+Available output types: directory|store
+
+Also, it is possible to specify only "<path>" (without "<type">).
+In this case, it is interpreted as a shorthand of "directory=<path>".`)
+	downloadFS.StringVar(&reportPath, "report", "-", "Path to the file that a download report is written (\"-\" means STDOUT).")
+	downloadFS.IntVar(&concurrency, "concurrency", 6, "Number of concurrent connectinos.")
 }

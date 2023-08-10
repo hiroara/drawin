@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"path/filepath"
 
 	"github.com/hiroara/carbo/flow"
 	"github.com/hiroara/carbo/pipe"
@@ -19,18 +18,25 @@ import (
 	"github.com/hiroara/drawin/store"
 )
 
-func download(paths []string, outdir, reportPath string, useStore bool, concurrency int) (*flow.Flow, error) {
+func download(paths []string, outStr, reportPath string, concurrency int) (*flow.Flow, error) {
+	o, err := parseOutput(outStr)
+	if err != nil {
+		return nil, err
+	}
+
 	var out client.Output
-	if useStore {
-		db, err := database.Open(filepath.Join(outdir, "drawin.db"))
+	closeOut := func() {}
+	switch o.typ {
+	case storeType:
+		db, err := database.Open(o.path)
 		if err != nil {
 			return nil, err
 		}
-		defer db.Close()
 
 		out = store.New(db)
-	} else {
-		out = client.NewDirectory(outdir)
+		closeOut = func() { db.Close() }
+	case directoryType:
+		out = client.NewDirectory(o.path)
 	}
 
 	cli, err := client.Build(out)
@@ -84,6 +90,7 @@ func download(paths []string, outdir, reportPath string, useStore bool, concurre
 		}).AsTask(),
 		32,
 	)
+	reps.Defer(closeOut)
 
 	sin := task.Connect(
 		reps,
