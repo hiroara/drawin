@@ -9,8 +9,8 @@ type SingleDB[T any] struct {
 	bucket []byte
 }
 
-func OpenSingle[T any](path string, bucket []byte) (*SingleDB[T], error) {
-	db, err := Open(path)
+func OpenSingle[T any](path string, bucket []byte, opts *Options) (*SingleDB[T], error) {
+	db, err := Open(path, opts)
 	if err != nil {
 		return nil, err
 	}

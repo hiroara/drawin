@@ -27,7 +27,7 @@ func download(paths []string, outStr, reportPath string, concurrency int) (*flow
 	closeOut := func() {}
 	switch o.typ {
 	case storeType:
-		db, err := database.Open(o.path)
+		db, err := database.Open(o.path, nil)
 		if err != nil {
 			return nil, err
 		}

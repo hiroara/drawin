@@ -19,7 +19,7 @@ func TestStore(t *testing.T) {
 	t.Parallel()
 
 	path := filepath.Join(t.TempDir(), "out", "test.db")
-	db, err := database.Open(path)
+	db, err := database.Open(path, nil)
 	require.NoError(t, err)
 	defer db.Close()
 

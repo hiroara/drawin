@@ -44,7 +44,7 @@ func New(cli Client) (*Downloader, error) {
 		return nil, err
 	}
 
-	cacheDB, err := database.Open(f.Name())
+	cacheDB, err := database.Open(f.Name(), nil)
 	if err != nil {
 		return nil, err
 	}

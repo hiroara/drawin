@@ -1,6 +1,7 @@
 package database_test
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -11,25 +12,49 @@ import (
 	"github.com/hiroara/drawin/database"
 )
 
-func openDB(t *testing.T) (*database.DB, error) {
-	path := filepath.Join(t.TempDir(), "test.db")
-
-	return database.Open(path)
+func openDB(path string, opts *database.Options) (*database.DB, error) {
+	return database.Open(path, opts)
 }
 
 func TestOpen(t *testing.T) {
 	t.Parallel()
 
-	db, err := openDB(t)
-	require.NoError(t, err)
-	assert.NotNil(t, db)
-	require.NoError(t, db.Close())
+	t.Run("NormalCase", func(t *testing.T) {
+		t.Parallel()
+
+		db, err := openDB(filepath.Join(t.TempDir(), "test.db"), nil)
+		require.NoError(t, err)
+		assert.NotNil(t, db)
+		require.NoError(t, db.Close())
+	})
+
+	t.Run("Create=false,DB=DoesNotExist", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := openDB(filepath.Join(t.TempDir(), "test.db"), &database.Options{Create: false})
+		require.ErrorIs(t, err, os.ErrNotExist)
+	})
+
+	t.Run("Readonly=true,DB=Exists", func(t *testing.T) {
+		t.Parallel()
+
+		path := filepath.Join(t.TempDir(), "test.db")
+
+		db, err := openDB(path, nil)
+		require.NoError(t, err)
+		db.Close()
+
+		db, err = openDB(path, &database.Options{Create: false})
+		require.NoError(t, err)
+		assert.NotNil(t, db)
+		require.NoError(t, db.Close())
+	})
 }
 
 func TestDBView(t *testing.T) {
 	t.Parallel()
 
-	db, err := openDB(t)
+	db, err := openDB(filepath.Join(t.TempDir(), "test.db"), nil)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -43,9 +68,7 @@ func TestDBView(t *testing.T) {
 func TestDBUpdate(t *testing.T) {
 	t.Parallel()
 
-	path := filepath.Join(t.TempDir(), "test.db")
-
-	db, err := database.Open(path)
+	db, err := openDB(filepath.Join(t.TempDir(), "test.db"), nil)
 	require.NoError(t, err)
 	defer db.Close()
 

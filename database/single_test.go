@@ -19,13 +19,13 @@ var bucket = []byte("test-bucket")
 func openSingleDB(t *testing.T) (*database.SingleDB[*entry], error) {
 	path := filepath.Join(t.TempDir(), "test.db")
 
-	return database.OpenSingle[*entry](path, bucket)
+	return database.OpenSingle[*entry](path, bucket, nil)
 }
 
 func TestSingle(t *testing.T) {
 	t.Parallel()
 
-	db, err := openDB(t)
+	db, err := openDB(filepath.Join(t.TempDir(), "test.db"), nil)
 	require.NoError(t, err)
 	sdb, err := database.Single[*entry](db, bucket)
 	require.NoError(t, err)

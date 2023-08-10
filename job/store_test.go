@@ -14,7 +14,7 @@ import (
 func TestStoreCreateJob(t *testing.T) {
 	t.Parallel()
 
-	db, err := database.OpenSingle[*job.Job](filepath.Join(t.TempDir(), "test.db"), []byte("test-bucket"))
+	db, err := database.OpenSingle[*job.Job](filepath.Join(t.TempDir(), "test.db"), []byte("test-bucket"), nil)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -63,7 +63,7 @@ func TestStoreCreateJob(t *testing.T) {
 func TestStorePut(t *testing.T) {
 	t.Parallel()
 
-	db, err := database.OpenSingle[*job.Job](filepath.Join(t.TempDir(), "test.db"), []byte("test-bucket"))
+	db, err := database.OpenSingle[*job.Job](filepath.Join(t.TempDir(), "test.db"), []byte("test-bucket"), nil)
 	require.NoError(t, err)
 	defer db.Close()
 

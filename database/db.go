@@ -11,8 +11,23 @@ type DB struct {
 	db *bolt.DB
 }
 
-func Open(path string) (*DB, error) {
-	err := os.MkdirAll(filepath.Dir(path), 0755)
+type Options struct {
+	Create bool
+}
+
+var DefaultOptions = &Options{Create: true}
+
+func Open(path string, opts *Options) (*DB, error) {
+	if opts == nil {
+		opts = DefaultOptions
+	}
+
+	_, err := os.Stat(path)
+	if !opts.Create && os.IsNotExist(err) {
+		return nil, err
+	}
+
+	err = os.MkdirAll(filepath.Dir(path), 0755)
 	if err != nil {
 		return nil, err
 	}
