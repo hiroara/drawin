@@ -25,7 +25,7 @@ var errNoMatchingOutputType = errors.New("unknown output type is specified")
 func parseOutput(s string) (*output, error) {
 	ss := strings.SplitN(s, "=", 2)
 	if len(ss) == 0 {
-		return nil, fmt.Errorf("%w: <empty>", errNoMatchingOutputType, s)
+		return nil, fmt.Errorf("%w: <empty>", errNoMatchingOutputType)
 	}
 
 	if len(ss) == 1 {
