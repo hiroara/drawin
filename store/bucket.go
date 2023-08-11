@@ -18,8 +18,10 @@ func newBucketSet(tx *bolt.Tx) *bucketSet {
 }
 
 func (bs *bucketSet) put(rep *reporter.Report, data []byte) error {
-	if err := bs.images.put(rep, data); err != nil {
-		return err
+	if data != nil {
+		if err := bs.images.put(rep, data); err != nil {
+			return err
+		}
 	}
 	return bs.reports.put(rep)
 }

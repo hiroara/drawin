@@ -59,7 +59,13 @@ func (d *Client) Download(ctx context.Context, j *job.Job) (*reporter.Report, er
 
 	bs, err := d.download(ctx, j)
 	if err != nil {
-		return reporter.FailedReport(j, err), nil
+		rep := reporter.FailedReport(j, err)
+
+		if err := d.out.Add(rep, bs); err != nil {
+			return nil, err
+		}
+
+		return rep, nil
 	}
 
 	rep = reporter.DownloadedReport(j, int64(len(bs)))

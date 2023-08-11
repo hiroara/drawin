@@ -1,13 +1,10 @@
 package client_test
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -18,6 +15,7 @@ import (
 	"github.com/hiroara/drawin/client"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/reporter"
+	"github.com/hiroara/drawin/store"
 )
 
 type customHandler struct {
@@ -36,9 +34,10 @@ func (h *customHandler) Get(ctx context.Context, j *job.Job) ([]byte, error) {
 
 func TestDownload(t *testing.T) {
 	t.Run("ResponseStatusCode=OK", func(t *testing.T) {
-		dirpath := filepath.Join(t.TempDir(), "test-out")
-		dir := client.NewDirectory(dirpath)
-		cli, err := client.Build(dir)
+		path := filepath.Join(t.TempDir(), "test.db")
+		s, err := store.Open(path, nil)
+		require.NoError(t, err)
+		cli, err := client.Build(s)
 		require.NoError(t, err)
 
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -52,12 +51,16 @@ func TestDownload(t *testing.T) {
 		assert.Equal(t, *j, rep.Job)
 		assert.Equal(t, reporter.Downloaded, rep.Result)
 
-		f, err := os.Open(filepath.Join(dirpath, "image1.jpg"))
+		rep, err = s.Get(j)
 		require.NoError(t, err)
-		buf := bytes.NewBuffer(nil)
-		_, err = io.Copy(buf, f)
+		if assert.NotNil(t, rep) {
+			assert.Equal(t, reporter.Downloaded, rep.Result)
+		}
+
+		data, err := s.Read(rep)
 		require.NoError(t, err)
-		assert.Equal(t, "Successful\n", buf.String())
+
+		assert.Equal(t, "Successful\n", string(data))
 		assert.Equal(t, int64(11), rep.ContentLength)
 
 		rep, err = cli.Download(context.Background(), j)
@@ -67,9 +70,10 @@ func TestDownload(t *testing.T) {
 	})
 
 	t.Run("ResponseStatusCode=NotFound", func(t *testing.T) {
-		dirpath := filepath.Join(t.TempDir(), "test-out")
-		dir := client.NewDirectory(dirpath)
-		cli, err := client.Build(dir)
+		path := filepath.Join(t.TempDir(), "test.db")
+		s, err := store.Open(path, nil)
+		require.NoError(t, err)
+		cli, err := client.Build(s)
 		require.NoError(t, err)
 
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -83,8 +87,15 @@ func TestDownload(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, reporter.Failed, rep.Result)
 
-		_, err = os.Stat(filepath.Join(dirpath, "image1.jpg"))
-		require.ErrorIs(t, err, os.ErrNotExist)
+		rep, err = s.Get(j)
+		require.NoError(t, err)
+		if assert.NotNil(t, rep) {
+			assert.Equal(t, reporter.Failed, rep.Result)
+		}
+
+		data, err := s.Read(rep)
+		require.NoError(t, err)
+		assert.Nil(t, data)
 	})
 }
 

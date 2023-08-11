@@ -18,6 +18,10 @@ func NewDirectory(dir string) *DirectoryOutput {
 }
 
 func (out *DirectoryOutput) Add(rep *reporter.Report, data []byte) error {
+	if data == nil {
+		// Does not store anything when data is missing
+		return nil
+	}
 	return os.WriteFile(out.fullpath(rep.Name), data, 0644)
 }
 

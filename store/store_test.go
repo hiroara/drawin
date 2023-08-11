@@ -1,7 +1,7 @@
 package store_test
 
 import (
-	"os"
+	"errors"
 	"path/filepath"
 	"testing"
 
@@ -19,60 +19,79 @@ import (
 func TestStore(t *testing.T) {
 	t.Parallel()
 
-	path := filepath.Join(t.TempDir(), "out", "test.db")
-	db, err := database.Open(path, nil)
-	require.NoError(t, err)
-	defer db.Close()
+	buildStore := func(t *testing.T) (*database.DB, *store.Store) {
+		path := filepath.Join(t.TempDir(), "out", "test.db")
+		db, err := database.Open(path, nil)
+		require.NoError(t, err)
 
-	s := store.New(db)
-	require.NoError(t, s.Initialize())
-	defer s.Close()
+		s := store.New(db)
+		require.NoError(t, s.Initialize())
+		return db, s
+	}
 
 	j := &job.Job{Name: "file1.txt", URL: "https://example.com/dir/file1.txt"}
-	data := []byte("test value")
 
-	rep, err := s.Get(j)
-	require.NoError(t, err)
-	assert.Nil(t, rep)
+	t.Run("NoDataCase", func(t *testing.T) {
+		t.Parallel()
 
-	require.NoError(t, s.Add(reporter.DownloadedReport(j, int64(len(data))), data))
+		_, s := buildStore(t)
 
-	require.NoError(t, db.View(func(tx *bolt.Tx) error {
-		imgs := tx.Bucket([]byte("images"))
-		v := imgs.Get([]byte(j.URL))
-		assert.Equal(t, data, v)
-
-		reps := tx.Bucket([]byte("reports"))
-		bs := reps.Get([]byte(j.URL))
-		rep, err := marshal.Gob[*reporter.Report]().Unmarshal(bs)
+		rep, err := s.Get(j)
 		require.NoError(t, err)
-		assert.Equal(t, "file1.txt", rep.Name)
-		return nil
-	}))
+		assert.Nil(t, rep)
+	})
 
-	rep, err = s.Get(j)
-	require.NoError(t, err)
-	if assert.NotNil(t, rep) {
-		assert.Equal(t, reporter.Downloaded, rep.Result)
-		assert.Equal(t, int64(len(data)), rep.ContentLength)
-	}
+	t.Run("DownloadedReportCase", func(t *testing.T) {
+		t.Parallel()
 
-	bs, err := s.Read(rep)
-	require.NoError(t, err)
-	if assert.NotNil(t, bs) {
-		assert.Equal(t, data, bs)
-	}
-}
+		data := []byte("test value")
 
-func TestStoreOpen(t *testing.T) {
-	t.Parallel()
+		db, s := buildStore(t)
 
-	path := filepath.Join(t.TempDir(), "out", "test.db")
-	s, err := store.Open(path, nil)
-	require.NoError(t, err)
-	defer s.Close()
+		require.NoError(t, s.Add(reporter.DownloadedReport(j, int64(len(data))), data))
 
-	stat, err := os.Stat(path)
-	require.NoError(t, err) // File exists
-	assert.False(t, stat.IsDir())
+		require.NoError(t, db.View(func(tx *bolt.Tx) error {
+			imgs := tx.Bucket([]byte("images"))
+			v := imgs.Get([]byte(j.URL))
+			assert.Equal(t, data, v)
+
+			reps := tx.Bucket([]byte("reports"))
+			bs := reps.Get([]byte(j.URL))
+			rep, err := marshal.Gob[*reporter.Report]().Unmarshal(bs)
+			require.NoError(t, err)
+			assert.Equal(t, "file1.txt", rep.Name)
+			return nil
+		}))
+
+		rep, err := s.Get(j)
+		require.NoError(t, err)
+		if assert.NotNil(t, rep) {
+			assert.Equal(t, reporter.Downloaded, rep.Result)
+			assert.Equal(t, int64(len(data)), rep.ContentLength)
+		}
+
+		bs, err := s.Read(rep)
+		require.NoError(t, err)
+		if assert.NotNil(t, bs) {
+			assert.Equal(t, data, bs)
+		}
+	})
+
+	t.Run("FailedReportCase", func(t *testing.T) {
+		t.Parallel()
+
+		_, s := buildStore(t)
+
+		require.NoError(t, s.Add(reporter.FailedReport(j, errors.New("test error")), nil))
+
+		rep, err := s.Get(j)
+		require.NoError(t, err)
+		if assert.NotNil(t, rep) {
+			assert.Equal(t, reporter.Failed, rep.Result)
+		}
+
+		bs, err := s.Read(rep)
+		require.NoError(t, err)
+		assert.Nil(t, bs)
+	})
 }
