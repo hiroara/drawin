@@ -10,7 +10,6 @@ import (
 	"github.com/hiroara/carbo/task"
 
 	"github.com/hiroara/drawin/client"
-	"github.com/hiroara/drawin/database"
 	"github.com/hiroara/drawin/downloader"
 	"github.com/hiroara/drawin/reader"
 	"github.com/hiroara/drawin/reporter"
@@ -27,13 +26,13 @@ func download(paths []string, outStr, reportPath string, concurrency int) (*flow
 	closeOut := func() {}
 	switch o.typ {
 	case storeType:
-		db, err := database.Open(o.path, nil)
+		s, err := store.Open(o.path, nil)
 		if err != nil {
 			return nil, err
 		}
 
-		out = store.New(db)
-		closeOut = func() { db.Close() }
+		out = s
+		closeOut = func() { s.Close() }
 	case directoryType:
 		out = client.NewDirectory(o.path)
 	}

@@ -23,11 +23,10 @@ var errNoSuccessfulReport = errors.New("report found but its content has not bee
 var errNoMatchingData = errors.New("data not found")
 
 func read(path string, urls []string) (*flow.Flow, error) {
-	db, err := database.Open(path, &database.Options{Create: false})
+	s, err := store.Open(path, &database.Options{Create: false})
 	if err != nil {
 		return nil, err
 	}
-	s := store.New(db)
 
 	src := source.FromSlice(urls)
 
@@ -72,6 +71,7 @@ func read(path string, urls []string) (*flow.Flow, error) {
 		}).AsTask(),
 		0,
 	)
+	sin.Defer(func() { s.Close() })
 
 	return flow.FromTask(sin), nil
 }

@@ -16,6 +16,14 @@ func New(db *database.DB) *Store {
 	return &Store{db: db}
 }
 
+func Open(path string, dbOpts *database.Options) (*Store, error) {
+	db, err := database.Open(path, dbOpts)
+	if err != nil {
+		return nil, err
+	}
+	return New(db), nil
+}
+
 func (s *Store) Initialize() error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		if err := createImageBucket(tx); err != nil {
@@ -63,4 +71,8 @@ func (s *Store) Read(rep *reporter.Report) ([]byte, error) {
 	}
 
 	return blob, nil
+}
+
+func (s *Store) Close() error {
+	return s.db.Close()
 }

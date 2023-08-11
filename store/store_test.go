@@ -1,6 +1,7 @@
 package store_test
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -25,6 +26,7 @@ func TestStore(t *testing.T) {
 
 	s := store.New(db)
 	require.NoError(t, s.Initialize())
+	defer s.Close()
 
 	j := &job.Job{Name: "file1.txt", URL: "https://example.com/dir/file1.txt"}
 	data := []byte("test value")
@@ -60,4 +62,17 @@ func TestStore(t *testing.T) {
 	if assert.NotNil(t, bs) {
 		assert.Equal(t, data, bs)
 	}
+}
+
+func TestStoreOpen(t *testing.T) {
+	t.Parallel()
+
+	path := filepath.Join(t.TempDir(), "out", "test.db")
+	s, err := store.Open(path, nil)
+	require.NoError(t, err)
+	defer s.Close()
+
+	stat, err := os.Stat(path)
+	require.NoError(t, err) // File exists
+	assert.False(t, stat.IsDir())
 }
