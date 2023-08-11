@@ -19,8 +19,11 @@ var (
 	concurrency int
 )
 
-var downloadFS *flag.FlagSet
-var readFS *flag.FlagSet
+var (
+	downloadFS *flag.FlagSet
+	readFS     *flag.FlagSet
+	reportFS   *flag.FlagSet
+)
 
 func main() {
 	flag.Parse()
@@ -37,6 +40,12 @@ func main() {
 		readFS.Parse(flag.Args()[1:])
 		if readFS.NArg() < 1 {
 			readFS.Usage()
+			os.Exit(1)
+		}
+	case "report":
+		reportFS.Parse(flag.Args()[1:])
+		if reportFS.NArg() < 1 {
+			reportFS.Usage()
 			os.Exit(1)
 		}
 	default:
@@ -60,13 +69,20 @@ func main() {
 		}),
 	)
 
+	reg.Register(
+		"report",
+		flow.NewFactory(func() (*flow.Flow, error) {
+			return report(reportFS.Arg(0), reportFS.Args()[1:])
+		}),
+	)
+
 	if err := reg.Run(context.Background(), com); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func init() {
-	flag.Usage = usage(flag.CommandLine, os.Args[0], "<command>", "Available commands: download|read")
+	flag.Usage = usage(flag.CommandLine, os.Args[0], "<command>", "Available commands: download|read|report")
 
 	downloadFS = flag.NewFlagSet("download", flag.ExitOnError)
 	downloadFS.Usage = usage(downloadFS, os.Args[0], "download [<list of URLs>...]", `Download files from URLs listed in the passed files.
@@ -79,8 +95,11 @@ In this case, it is interpreted as a shorthand of "directory=<path>".`)
 	downloadFS.StringVar(&reportPath, "report", "-", "Path to the file that a download report is written (\"-\" means STDOUT).")
 	downloadFS.IntVar(&concurrency, "concurrency", 6, "Number of concurrent connectinos.")
 
+	reportFS = flag.NewFlagSet("report", flag.ExitOnError)
+	reportFS.Usage = usage(reportFS, os.Args[0], "report <path to store> [<URL>...]", "Print download reports for passed URLs saved in the store path.")
+
 	readFS = flag.NewFlagSet("read", flag.ExitOnError)
-	readFS.Usage = usage(readFS, os.Args[0], "read <path to store> [<URL>...]", "_TBD_")
+	readFS.Usage = usage(readFS, os.Args[0], "read <path to store> [<URL>...]", "Print downloaded contents for passed URLs saved in the store path.")
 }
 
 func usage(fs *flag.FlagSet, prog, command, desc string) func() {

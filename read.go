@@ -9,17 +9,13 @@ import (
 	"github.com/hiroara/carbo/flow"
 	"github.com/hiroara/carbo/pipe"
 	"github.com/hiroara/carbo/sink"
-	"github.com/hiroara/carbo/source"
 	"github.com/hiroara/carbo/task"
 
 	"github.com/hiroara/drawin/database"
-	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/reporter"
 	"github.com/hiroara/drawin/store"
 )
 
-var errNoMatchingReport = errors.New("report not found")
-var errNoSuccessfulReport = errors.New("report found but its content has not been downloaded")
 var errNoMatchingData = errors.New("data not found")
 
 func read(path string, urls []string) (*flow.Flow, error) {
@@ -28,29 +24,15 @@ func read(path string, urls []string) (*flow.Flow, error) {
 		return nil, err
 	}
 
-	src := source.FromSlice(urls)
-
-	rs := task.Connect(
-		src.AsTask(),
-		pipe.Map(func(ctx context.Context, url string) (*reporter.Report, error) {
-			rep, err := s.Get(&job.Job{URL: url})
-			if err != nil {
-				return nil, err
-			}
-			if rep == nil {
-				return nil, fmt.Errorf("%w with URL: %s", errNoMatchingReport, url)
-			}
-			if rep.Result != reporter.Downloaded {
-				return nil, fmt.Errorf("%w with URL: %s", errNoSuccessfulReport, url)
-			}
-			return rep, nil
-		}).AsTask(),
-		0,
-	)
+	reps := getReports(s, urls)
 
 	ds := task.Connect(
-		rs,
+		reps.AsTask(),
 		pipe.Map(func(ctx context.Context, rep *reporter.Report) ([]byte, error) {
+			if rep.Result != reporter.Downloaded {
+				return nil, fmt.Errorf("%w with URL: %s", errNoSuccessfulReport, rep.URL)
+			}
+
 			bs, err := s.Read(rep)
 			if err != nil {
 				return nil, err
