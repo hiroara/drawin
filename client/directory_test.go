@@ -65,7 +65,7 @@ func TestDirectoryOutput(t *testing.T) {
 		dir, out := buildOutput(t)
 		require.NoError(t, out.Initialize())
 
-		require.NoError(t, out.Add(reporter.FailedReport(j, errors.New("test error")), nil))
+		require.NoError(t, out.Add(reporter.FailedReport(j, errors.New("test error"), true), nil))
 		_, err := os.Stat(filepath.Join(dir, "file1.txt"))
 		require.ErrorIs(t, err, os.ErrNotExist)
 	})

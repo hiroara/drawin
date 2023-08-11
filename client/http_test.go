@@ -67,12 +67,29 @@ func TestHTTPHandlerGet(t *testing.T) {
 		assert.Len(t, bs, 11)
 	})
 
-	t.Run("ResponseStatusCode=Error", func(t *testing.T) {
+	t.Run("ResponseStatusCode=ClientError", func(t *testing.T) {
 		t.Parallel()
 
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(400)
 			fmt.Fprintln(w, "Client error")
+		}))
+		defer srv.Close()
+
+		j := &job.Job{Name: "image1.jpg", URL: srv.URL}
+
+		cli := client.NewHTTPHandler(http.DefaultClient)
+
+		_, err := cli.Get(context.Background(), j)
+		require.ErrorIs(t, err, client.ErrClientError)
+	})
+
+	t.Run("ResponseStatusCode=Unexpected", func(t *testing.T) {
+		t.Parallel()
+
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			w.WriteHeader(500)
+			fmt.Fprintln(w, "Server internal error")
 		}))
 		defer srv.Close()
 

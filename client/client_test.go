@@ -27,6 +27,11 @@ func (h *customHandler) Match(j *job.Job) bool {
 	return args.Bool(0)
 }
 
+func (h *customHandler) ShouldRetry(err error) bool {
+	args := h.Called(err)
+	return args.Bool(0)
+}
+
 func (h *customHandler) Get(ctx context.Context, j *job.Job) ([]byte, error) {
 	args := h.Called(ctx, j)
 	return args.Get(0).([]byte), args.Error(1)

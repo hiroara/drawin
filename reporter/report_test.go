@@ -20,7 +20,7 @@ func TestDownloadedReport(t *testing.T) {
 		assert.Equal(t, *j, dr.Job)
 		assert.Equal(t, reporter.Downloaded, dr.Result)
 		assert.Equal(t, int64(256), dr.ContentLength)
-		assert.Empty(t, dr.Error)
+		assert.Empty(t, dr.Failure)
 	}
 }
 
@@ -34,7 +34,7 @@ func TestCachedReport(t *testing.T) {
 		assert.Equal(t, *j, dr.Job)
 		assert.Equal(t, reporter.Cached, dr.Result)
 		assert.Equal(t, int64(512), dr.ContentLength)
-		assert.Empty(t, dr.Error)
+		assert.Empty(t, dr.Failure)
 	}
 }
 
@@ -44,11 +44,14 @@ func TestFailedReport(t *testing.T) {
 	j := &job.Job{Name: "image1.jpg"}
 	err := errors.New("test error")
 
-	dr := reporter.FailedReport(j, err)
+	dr := reporter.FailedReport(j, err, true)
 	if assert.NotNil(t, dr) {
 		assert.Equal(t, *j, dr.Job)
 		assert.Equal(t, reporter.Failed, dr.Result)
 		assert.Empty(t, dr.ContentLength)
-		assert.Equal(t, err.Error(), dr.Error)
+		if assert.NotEmpty(t, dr.Failure) {
+			assert.Equal(t, err.Error(), dr.Failure.Error)
+			assert.True(t, dr.Failure.Permanent)
+		}
 	}
 }

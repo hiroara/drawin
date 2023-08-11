@@ -82,7 +82,7 @@ func TestStore(t *testing.T) {
 
 		_, s := buildStore(t)
 
-		require.NoError(t, s.Add(reporter.FailedReport(j, errors.New("test error")), nil))
+		require.NoError(t, s.Add(reporter.FailedReport(j, errors.New("test error"), true), nil))
 
 		rep, err := s.Get(j)
 		require.NoError(t, err)

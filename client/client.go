@@ -19,6 +19,7 @@ type Client struct {
 
 type Handler interface {
 	Match(*job.Job) bool
+	ShouldRetry(error) bool
 	Get(context.Context, *job.Job) ([]byte, error)
 }
 
@@ -45,23 +46,27 @@ func Build(out Output, opts ...Option) (*Client, error) {
 	return New(out, opts...), nil
 }
 
-var ErrUnexpectedResponseStatus = errors.New("received unexpected HTTP response status code")
-
-func (d *Client) Download(ctx context.Context, j *job.Job) (*reporter.Report, error) {
-	rep, err := d.out.Get(j)
+func (cli *Client) Download(ctx context.Context, j *job.Job) (*reporter.Report, error) {
+	rep, err := cli.out.Get(j)
 	if err != nil {
 		return nil, err
 	}
-	if rep != nil {
+
+	h, err := cli.selectHandler(j)
+	if err != nil {
+		return nil, err
+	}
+
+	if cli.useCache(rep) {
 		rep.Result = reporter.Cached
 		return rep, nil
 	}
 
-	bs, err := d.download(ctx, j)
+	bs, err := h.Get(ctx, j)
 	if err != nil {
-		rep := reporter.FailedReport(j, err)
+		rep := reporter.FailedReport(j, err, !h.ShouldRetry(err))
 
-		if err := d.out.Add(rep, bs); err != nil {
+		if err := cli.out.Add(rep, bs); err != nil {
 			return nil, err
 		}
 
@@ -70,7 +75,7 @@ func (d *Client) Download(ctx context.Context, j *job.Job) (*reporter.Report, er
 
 	rep = reporter.DownloadedReport(j, int64(len(bs)))
 
-	if err := d.out.Add(rep, bs); err != nil {
+	if err := cli.out.Add(rep, bs); err != nil {
 		return nil, err
 	}
 
@@ -79,19 +84,21 @@ func (d *Client) Download(ctx context.Context, j *job.Job) (*reporter.Report, er
 
 var errNoMatchingHandler = errors.New("no matching handler is found")
 
-func (d *Client) download(ctx context.Context, j *job.Job) ([]byte, error) {
-	h := d.findHandler(j)
-	if h == nil {
-		return nil, fmt.Errorf("%w for job: %s (URL: %s)", errNoMatchingHandler, j.Name, j.URL)
-	}
-	return h.Get(ctx, j)
-}
-
-func (d *Client) findHandler(j *job.Job) Handler {
-	for _, h := range d.handlers {
+func (cli *Client) selectHandler(j *job.Job) (Handler, error) {
+	for _, h := range cli.handlers {
 		if h.Match(j) {
-			return h
+			return h, nil
 		}
 	}
-	return nil
+	return nil, fmt.Errorf("%w for job: %s (URL: %s)", errNoMatchingHandler, j.Name, j.URL)
+}
+
+func (cli *Client) useCache(rep *reporter.Report) bool {
+	if rep == nil {
+		return false
+	}
+	if rep.Result != reporter.Failed {
+		return true
+	}
+	return rep.Failure.Permanent
 }
