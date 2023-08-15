@@ -15,15 +15,10 @@ import (
 )
 
 type Downloader struct {
-	client      Client
-	cache       *database.SingleDB[*job.Job]
-	cacheFile   *os.File
-	concurrency int
-}
-
-type config struct {
-	concurrency int
-	buffer      int
+	client    Client
+	cache     *database.SingleDB[*job.Job]
+	cacheFile *os.File
+	config    *config
 }
 
 type Client interface {
@@ -32,12 +27,7 @@ type Client interface {
 
 var cacheBucket = []byte("drawin-cache")
 
-func New(cli Client) (*Downloader, error) {
-	cfg := &config{
-		concurrency: 4,
-		buffer:      64,
-	}
-
+func New(cli Client, opts ...Option) (*Downloader, error) {
 	f, err := os.CreateTemp("", "drawin-*.db")
 	if err != nil {
 		return nil, err
@@ -50,10 +40,10 @@ func New(cli Client) (*Downloader, error) {
 	cacheSDB, err := database.Single[*job.Job](cacheDB, cacheBucket)
 
 	return &Downloader{
-		client:      cli,
-		cache:       cacheSDB,
-		cacheFile:   f,
-		concurrency: cfg.concurrency,
+		client:    cli,
+		cache:     cacheSDB,
+		cacheFile: f,
+		config:    newConfig(opts...),
 	}, nil
 }
 
@@ -70,7 +60,7 @@ func (d *Downloader) downloadFlow(urls <-chan string, out chan<- *reporter.Repor
 	src := source.FromChan(urls)
 	urlBatches := task.Connect(
 		src.AsTask(),
-		pipe.Batch[string](32).AsTask(),
+		pipe.Batch[string](d.config.batchSize).AsTask(),
 		0,
 	)
 	jobBatches := task.Connect(
@@ -104,7 +94,7 @@ func (d *Downloader) downloadFlow(urls <-chan string, out chan<- *reporter.Repor
 	)
 	reps := task.Connect(
 		jobs,
-		pipe.Map(d.client.Download).Concurrent(d.concurrency).AsTask(),
+		pipe.Map(d.client.Download).Concurrent(d.config.concurrency).AsTask(),
 		0,
 	)
 
