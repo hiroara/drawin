@@ -103,29 +103,3 @@ func TestDownload(t *testing.T) {
 		assert.Nil(t, data)
 	})
 }
-
-func TestDownloadWithCustomHandler(t *testing.T) {
-	t.Parallel()
-
-	ctx := context.Background()
-	dirpath := filepath.Join(t.TempDir(), "test-out")
-	dir := client.NewDirectory(dirpath)
-
-	h := &customHandler{}
-	cli, err := client.Build(dir, client.WithHandlers(h))
-	require.NoError(t, err)
-
-	j := &job.Job{Name: "test1.jpg", URL: "https://example.com/test1.jpg"}
-	data := []byte("downloaded content")
-
-	h.On("Match", j).Return(true).Once()
-	h.On("Get", ctx, j).Return(data, nil).Once()
-
-	rep, err := cli.Download(ctx, j)
-	require.NoError(t, err)
-	if assert.NotNil(t, rep) {
-		assert.Equal(t, reporter.Downloaded, rep.Result)
-		assert.Equal(t, int64(len(data)), rep.ContentLength)
-	}
-	h.AssertExpectations(t)
-}

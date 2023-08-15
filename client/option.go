@@ -7,3 +7,9 @@ func WithHandlers(hs ...Handler) Option {
 		cli.handlers = hs
 	}
 }
+
+func WithRetryConfig(cfg *RetryConfig) Option {
+	return func(cli *Client) {
+		cli.retry = cfg
+	}
+}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/reporter"
@@ -15,15 +14,8 @@ var downloadFailure = errors.New("Download failed.")
 type Client struct {
 	out      Output
 	handlers []Handler
+	retry    *RetryConfig
 }
-
-type Handler interface {
-	Match(*job.Job) bool
-	ShouldRetry(error) bool
-	Get(context.Context, *job.Job) ([]byte, error)
-}
-
-var DefaultHandlers = []Handler{&HTTPHandler{client: http.DefaultClient}}
 
 type Output interface {
 	Add(*reporter.Report, []byte) error
@@ -97,8 +89,5 @@ func (cli *Client) useCache(rep *reporter.Report) bool {
 	if rep == nil {
 		return false
 	}
-	if rep.Result != reporter.Failed {
-		return true
-	}
-	return rep.Failure.Permanent
+	return !cli.retry.shouldRetry(rep)
 }
