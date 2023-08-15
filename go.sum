@@ -8,6 +8,10 @@ github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
 github.com/hiroara/carbo v0.5.0 h1:sSJdJSjA6h1QMAYbWoY8dpEmfQdYUtD3IwM3rYen3mg=
 github.com/hiroara/carbo v0.5.0/go.mod h1:ncigf64YnkhG0Fr0fhl1U4l8zowojvb8kEFyPWPatyA=
+github.com/hiroara/carbo v0.5.1-0.20230811145852-942b14fe8412 h1:PTBACO1kCLJKPqiLI5r/iODZ+s4bo+IWcOuml4P+jUI=
+github.com/hiroara/carbo v0.5.1-0.20230811145852-942b14fe8412/go.mod h1:ncigf64YnkhG0Fr0fhl1U4l8zowojvb8kEFyPWPatyA=
+github.com/hiroara/carbo v0.6.0 h1:f4K39dpMRNraiM8S42s7GHDKPIX3tKZGS5LGFkPXb8s=
+github.com/hiroara/carbo v0.6.0/go.mod h1:ncigf64YnkhG0Fr0fhl1U4l8zowojvb8kEFyPWPatyA=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=

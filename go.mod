@@ -3,7 +3,7 @@ module github.com/hiroara/drawin
 go 1.20
 
 require (
-	github.com/hiroara/carbo v0.5.0
+	github.com/hiroara/carbo v0.6.0
 	github.com/stretchr/testify v1.8.4
 	go.etcd.io/bbolt v1.3.7
 	golang.org/x/sync v0.3.0

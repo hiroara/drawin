@@ -70,7 +70,7 @@ func TestDownloader(t *testing.T) {
 	cli.AssertExpectations(t)
 }
 
-func TestDownloaderAsPipe(t *testing.T) {
+func TestDownloaderAsTask(t *testing.T) {
 	t.Parallel()
 
 	cli := new(dummyClient)

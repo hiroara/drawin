@@ -12,7 +12,6 @@ import (
 	"github.com/hiroara/drawin/database"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/reporter"
-	"golang.org/x/sync/errgroup"
 )
 
 type Downloader struct {
@@ -124,23 +123,6 @@ func (d *Downloader) Close() error {
 	return nil
 }
 
-func (d *Downloader) AsPipe() pipe.Pipe[string, *reporter.Report] {
-	return pipe.FromFn(func(ctx context.Context, urls <-chan string, out chan<- *reporter.Report) error {
-		m := make(chan *reporter.Report)
-		grp, ctx := errgroup.WithContext(ctx)
-		grp.Go(func() error { return d.Run(ctx, urls, m) })
-		grp.Go(func() error {
-			for rep := range m {
-				if err := task.Emit(ctx, out, rep); err != nil {
-					return err
-				}
-			}
-			return nil
-		})
-		return grp.Wait()
-	})
-}
-
 func (d *Downloader) AsTask() task.Task[string, *reporter.Report] {
-	return d.AsPipe()
+	return task.FromFn(d.Run)
 }
