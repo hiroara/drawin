@@ -1,2 +1,3 @@
-# drawin
-A file downloader with Golang interface and CLI
+# Drawin
+
+A file downloader with Golang interface and CLI.
