@@ -11,6 +11,7 @@ import (
 	"github.com/hiroara/carbo/task"
 	"github.com/hiroara/drawin/database"
 	"github.com/hiroara/drawin/job"
+	"github.com/hiroara/drawin/marshal"
 	"github.com/hiroara/drawin/reporter"
 )
 
@@ -37,7 +38,7 @@ func New(cli Client, opts ...Option) (*Downloader, error) {
 	if err != nil {
 		return nil, err
 	}
-	cacheSDB, err := database.Single[*job.Job](cacheDB, cacheBucket)
+	cacheSDB, err := database.Single[*job.Job](cacheDB, cacheBucket, marshal.Msgpack[*job.Job]())
 
 	return &Downloader{
 		client:    cli,

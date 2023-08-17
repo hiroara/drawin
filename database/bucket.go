@@ -1,8 +1,9 @@
 package database
 
 import (
-	"github.com/hiroara/carbo/marshal"
 	bolt "go.etcd.io/bbolt"
+
+	"github.com/hiroara/drawin/marshal"
 )
 
 type Bucket[T any] struct {
@@ -10,8 +11,8 @@ type Bucket[T any] struct {
 	marshal marshal.Spec[T]
 }
 
-func newBucket[T any](bucket *bolt.Bucket) *Bucket[T] {
-	return &Bucket[T]{bucket: bucket, marshal: marshal.Gob[T]()}
+func NewBucket[T any](tx *bolt.Tx, bucket []byte, m marshal.Spec[T]) *Bucket[T] {
+	return &Bucket[T]{bucket: tx.Bucket(bucket), marshal: m}
 }
 
 func (b *Bucket[T]) Get(key []byte) (T, error) {

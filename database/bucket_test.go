@@ -1,6 +1,7 @@
 package database_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,7 +15,8 @@ func TestBucket(t *testing.T) {
 
 	key1 := []byte("item1")
 
-	sdb, err := openSingleDB(t)
+	path := filepath.Join(t.TempDir(), "test.db")
+	sdb, err := openSingleDB(path)
 	require.NoError(t, err)
 	err = sdb.Update(func(buc *database.Bucket[*entry]) error {
 		e, err := buc.Get(key1)

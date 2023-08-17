@@ -46,7 +46,7 @@ func (s *Store) Get(j *job.Job) (*reporter.Report, error) {
 	var rep *reporter.Report
 
 	err := s.db.View(func(tx *bolt.Tx) error {
-		r, err := newReportBucket(tx).get(j)
+		r, err := newReportBucket(tx).Get([]byte(j.URL))
 		if err != nil {
 			return err
 		}
@@ -63,7 +63,11 @@ func (s *Store) Get(j *job.Job) (*reporter.Report, error) {
 func (s *Store) Read(rep *reporter.Report) ([]byte, error) {
 	var blob []byte
 	err := s.db.View(func(tx *bolt.Tx) error {
-		blob = newImageBucket(tx).get(rep)
+		bs, err := newImageBucket(tx).Get([]byte(rep.URL))
+		if err != nil {
+			return err
+		}
+		blob = bs
 		return nil
 	})
 	if err != nil {

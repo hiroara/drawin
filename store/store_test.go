@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 	bolt "go.etcd.io/bbolt"
 
-	"github.com/hiroara/carbo/marshal"
 	"github.com/hiroara/drawin/database"
 	"github.com/hiroara/drawin/job"
+	"github.com/hiroara/drawin/marshal"
 	"github.com/hiroara/drawin/reporter"
 	"github.com/hiroara/drawin/store"
 )
@@ -57,7 +57,7 @@ func TestStore(t *testing.T) {
 
 			reps := tx.Bucket([]byte("reports"))
 			bs := reps.Get([]byte(j.URL))
-			rep, err := marshal.Gob[*reporter.Report]().Unmarshal(bs)
+			rep, err := marshal.Msgpack[*reporter.Report]().Unmarshal(bs)
 			require.NoError(t, err)
 			assert.Equal(t, "file1.txt", rep.Name)
 			return nil

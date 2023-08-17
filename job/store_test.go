@@ -9,12 +9,13 @@ import (
 
 	"github.com/hiroara/drawin/database"
 	"github.com/hiroara/drawin/job"
+	"github.com/hiroara/drawin/marshal"
 )
 
 func TestStoreCreateJob(t *testing.T) {
 	t.Parallel()
 
-	db, err := database.OpenSingle[*job.Job](filepath.Join(t.TempDir(), "test.db"), []byte("test-bucket"), nil)
+	db, err := database.OpenSingle[*job.Job](filepath.Join(t.TempDir(), "test.db"), []byte("test-bucket"), marshal.Msgpack[*job.Job](), nil)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -63,7 +64,7 @@ func TestStoreCreateJob(t *testing.T) {
 func TestStorePut(t *testing.T) {
 	t.Parallel()
 
-	db, err := database.OpenSingle[*job.Job](filepath.Join(t.TempDir(), "test.db"), []byte("test-bucket"), nil)
+	db, err := database.OpenSingle[*job.Job](filepath.Join(t.TempDir(), "test.db"), []byte("test-bucket"), marshal.Msgpack[*job.Job](), nil)
 	require.NoError(t, err)
 	defer db.Close()
 
