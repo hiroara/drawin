@@ -2,13 +2,13 @@ package store
 
 import (
 	"github.com/hiroara/drawin/database"
-	"github.com/hiroara/drawin/reporter"
+	"github.com/hiroara/drawin/downloader"
 	bolt "go.etcd.io/bbolt"
 )
 
 type bucketSet struct {
 	images  *database.Bucket[[]byte]
-	reports *database.Bucket[*reporter.Report]
+	reports *database.Bucket[*downloader.Report]
 }
 
 func newBucketSet(tx *bolt.Tx) *bucketSet {
@@ -18,7 +18,7 @@ func newBucketSet(tx *bolt.Tx) *bucketSet {
 	}
 }
 
-func (bs *bucketSet) put(rep *reporter.Report, data []byte) error {
+func (bs *bucketSet) put(rep *downloader.Report, data []byte) error {
 	if data != nil {
 		if err := bs.images.Put([]byte(rep.URL), data); err != nil {
 			return err

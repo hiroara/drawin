@@ -4,8 +4,8 @@ import (
 	bolt "go.etcd.io/bbolt"
 
 	"github.com/hiroara/drawin/database"
+	"github.com/hiroara/drawin/downloader"
 	"github.com/hiroara/drawin/job"
-	"github.com/hiroara/drawin/reporter"
 )
 
 type Store struct {
@@ -36,14 +36,14 @@ func (s *Store) Initialize() error {
 	})
 }
 
-func (s *Store) Add(rep *reporter.Report, data []byte) error {
+func (s *Store) Add(rep *downloader.Report, data []byte) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		return newBucketSet(tx).put(rep, data)
 	})
 }
 
-func (s *Store) Get(j *job.Job) (*reporter.Report, error) {
-	var rep *reporter.Report
+func (s *Store) Get(j *job.Job) (*downloader.Report, error) {
+	var rep *downloader.Report
 
 	err := s.db.View(func(tx *bolt.Tx) error {
 		r, err := newReportBucket(tx).Get([]byte(j.URL))
@@ -60,7 +60,7 @@ func (s *Store) Get(j *job.Job) (*reporter.Report, error) {
 	return rep, nil
 }
 
-func (s *Store) Read(rep *reporter.Report) ([]byte, error) {
+func (s *Store) Read(rep *downloader.Report) ([]byte, error) {
 	var blob []byte
 	err := s.db.View(func(tx *bolt.Tx) error {
 		bs, err := newImageBucket(tx).Get([]byte(rep.URL))

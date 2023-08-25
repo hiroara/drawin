@@ -5,8 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/hiroara/drawin/downloader"
+	"github.com/hiroara/drawin/downloader/report"
 	"github.com/hiroara/drawin/job"
-	"github.com/hiroara/drawin/reporter"
 )
 
 type DirectoryOutput struct {
@@ -17,7 +18,7 @@ func NewDirectory(dir string) *DirectoryOutput {
 	return &DirectoryOutput{dir: dir}
 }
 
-func (out *DirectoryOutput) Add(rep *reporter.Report, data []byte) error {
+func (out *DirectoryOutput) Add(rep *downloader.Report, data []byte) error {
 	if data == nil {
 		// Does not store anything when data is missing
 		return nil
@@ -25,10 +26,10 @@ func (out *DirectoryOutput) Add(rep *reporter.Report, data []byte) error {
 	return os.WriteFile(out.fullpath(rep.Name), data, 0644)
 }
 
-func (out *DirectoryOutput) Get(j *job.Job) (*reporter.Report, error) {
+func (out *DirectoryOutput) Get(j *job.Job) (*downloader.Report, error) {
 	stat, err := os.Stat(out.fullpath(j.Name))
 	if err == nil { // File exists
-		return reporter.CachedReport(j, stat.Size()), nil
+		return report.Cached(j, stat.Size()), nil
 	}
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, nil

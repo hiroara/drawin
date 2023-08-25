@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+
+	"github.com/hiroara/drawin/downloader/report"
 )
 
 type jsonReporter struct {
@@ -30,11 +32,11 @@ func OpenJSON(path string) (Reporter, error) {
 	return NewJSON(f), nil
 }
 
-func (r *jsonReporter) Write(rep *Report) error {
+func (r *jsonReporter) Write(rep *report.Report) error {
 	return r.write(rep)
 }
 
-func (r *jsonReporter) write(rep *Report) error {
+func (r *jsonReporter) write(rep *report.Report) error {
 	return r.writer.Encode(rep)
 }
 

@@ -11,12 +11,12 @@ import (
 
 	"github.com/hiroara/drawin/client"
 	"github.com/hiroara/drawin/downloader"
+	"github.com/hiroara/drawin/internal/reporter"
 	"github.com/hiroara/drawin/reader"
-	"github.com/hiroara/drawin/reporter"
 	"github.com/hiroara/drawin/store"
 )
 
-func download(paths []string, outStr, reportPath string, concurrency int) (*flow.Flow, error) {
+func runDownload(paths []string, outStr, reportPath string, concurrency int) (*flow.Flow, error) {
 	o, err := parseOutput(outStr)
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func download(paths []string, outStr, reportPath string, concurrency int) (*flow
 
 	sin := task.Connect(
 		reps,
-		sink.ElementWise(func(ctx context.Context, rep *reporter.Report) error { return repr.Write(rep) }).AsTask(),
+		sink.ElementWise(func(ctx context.Context, rep *downloader.Report) error { return repr.Write(rep) }).AsTask(),
 		0,
 	)
 

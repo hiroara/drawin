@@ -12,13 +12,14 @@ import (
 	"github.com/hiroara/carbo/task"
 
 	"github.com/hiroara/drawin/database"
-	"github.com/hiroara/drawin/reporter"
+	"github.com/hiroara/drawin/downloader"
+	"github.com/hiroara/drawin/downloader/report"
 	"github.com/hiroara/drawin/store"
 )
 
 var errNoMatchingData = errors.New("data not found")
 
-func read(path string, urls []string) (*flow.Flow, error) {
+func runRead(path string, urls []string) (*flow.Flow, error) {
 	s, err := store.Open(path, &database.Options{Create: false})
 	if err != nil {
 		return nil, err
@@ -28,8 +29,8 @@ func read(path string, urls []string) (*flow.Flow, error) {
 
 	ds := task.Connect(
 		reps.AsTask(),
-		pipe.Map(func(ctx context.Context, rep *reporter.Report) ([]byte, error) {
-			if rep.Result != reporter.Downloaded {
+		pipe.Map(func(ctx context.Context, rep *downloader.Report) ([]byte, error) {
+			if rep.Result != report.DownloadedResult {
 				return nil, fmt.Errorf("%w with URL: %s", errNoSuccessfulReport, rep.URL)
 			}
 

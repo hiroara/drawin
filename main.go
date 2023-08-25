@@ -58,21 +58,21 @@ func main() {
 	reg.Register(
 		"download",
 		flow.NewFactory(func() (*flow.Flow, error) {
-			return download(downloadFS.Args(), outStr, reportPath, concurrency)
+			return runDownload(downloadFS.Args(), outStr, reportPath, concurrency)
 		}),
 	)
 
 	reg.Register(
 		"read",
 		flow.NewFactory(func() (*flow.Flow, error) {
-			return read(readFS.Arg(0), readFS.Args()[1:])
+			return runRead(readFS.Arg(0), readFS.Args()[1:])
 		}),
 	)
 
 	reg.Register(
 		"report",
 		flow.NewFactory(func() (*flow.Flow, error) {
-			return report(reportFS.Arg(0), reportFS.Args()[1:])
+			return runReport(reportFS.Arg(0), reportFS.Args()[1:])
 		}),
 	)
 

@@ -2,7 +2,7 @@ package downloader
 
 type config struct {
 	concurrency int
-	batchSize      int
+	batchSize   int
 }
 
 func newConfig(opts ...Option) *config {
