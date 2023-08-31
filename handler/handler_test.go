@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/hiroara/drawin"
-	"github.com/hiroara/drawin/client"
 	"github.com/hiroara/drawin/handler"
+	"github.com/hiroara/drawin/internal/client"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/output"
+	"github.com/hiroara/drawin/report"
 )
 
 type customHandler struct {
@@ -55,7 +55,7 @@ func TestCustomHandler(t *testing.T) {
 	rep, err := cli.Download(ctx, j)
 	require.NoError(t, err)
 	if assert.NotNil(t, rep) {
-		assert.Equal(t, drawin.DownloadedResult, rep.Result)
+		assert.Equal(t, report.DownloadedResult, rep.Result)
 		assert.Equal(t, int64(len(data)), rep.ContentLength)
 	}
 	h.AssertExpectations(t)

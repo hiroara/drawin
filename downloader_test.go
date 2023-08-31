@@ -11,15 +11,26 @@ import (
 	"github.com/hiroara/carbo/taskfn"
 	"github.com/hiroara/drawin"
 	"github.com/hiroara/drawin/job"
+	"github.com/hiroara/drawin/output"
 )
 
-type dummyClient struct {
+type dummyHandler struct {
 	mock.Mock
 }
 
-func (cli *dummyClient) Download(ctx context.Context, j *job.Job) (*drawin.Report, error) {
-	args := cli.Mock.Called(ctx, j)
-	return args.Get(0).(*drawin.Report), args.Error(1)
+func (h *dummyHandler) Match(j *job.Job) bool {
+	args := h.Mock.Called(j)
+	return args.Bool(0)
+}
+
+func (h *dummyHandler) ShouldRetry(err error) bool {
+	args := h.Mock.Called(err)
+	return args.Bool(0)
+}
+
+func (h *dummyHandler) Get(ctx context.Context, j *job.Job) ([]byte, error) {
+	args := h.Mock.Called(ctx, j)
+	return args.Get(0).([]byte), args.Error(1)
 }
 
 var urls = []string{
@@ -27,7 +38,9 @@ var urls = []string{
 	"https://example.com/assets/image2.jpg",
 }
 
-func setupClient(cli *dummyClient, urls []string) {
+func setupHandler(urls []string) *dummyHandler {
+	h := &dummyHandler{}
+
 	jobExpectation1 := mock.MatchedBy(func(j *job.Job) bool {
 		return j.URL == urls[0]
 	})
@@ -36,23 +49,28 @@ func setupClient(cli *dummyClient, urls []string) {
 		return j.URL == urls[1]
 	})
 
-	cli.On("Download", mock.Anything, jobExpectation1).Return(drawin.DownloadedReport(&job.Job{Name: "image1.jpg", URL: urls[0]}, 1024), nil).Once()
-	cli.On("Download", mock.Anything, jobExpectation2).Return(drawin.DownloadedReport(&job.Job{Name: "image2.jpg", URL: urls[1]}, 1024), nil).Once()
+	h.On("Match", jobExpectation1).Return(true)
+	h.On("Match", jobExpectation2).Return(true)
+
+	h.On("Get", mock.Anything, jobExpectation1).Return([]byte("result1"), nil)
+	h.On("Get", mock.Anything, jobExpectation2).Return([]byte("result2"), nil)
+
+	return h
 }
 
 func TestDownloader(t *testing.T) {
 	t.Parallel()
 
-	cli := new(dummyClient)
-	d, err := drawin.NewDownloader(cli)
+	outDir := output.NewDirectory(t.TempDir())
+	h := setupHandler(urls)
+
+	d, err := drawin.NewDownloader(outDir, drawin.WithHandlers(h))
 	require.NoError(t, err)
 
 	urlsC := make(chan string, 2)
 	urlsC <- urls[0]
 	urlsC <- urls[1]
 	close(urlsC)
-
-	setupClient(cli, urls)
 
 	ctx := context.Background()
 
@@ -66,19 +84,19 @@ func TestDownloader(t *testing.T) {
 	}
 	assert.ElementsMatch(t, urls, results)
 
-	cli.AssertExpectations(t)
+	h.AssertExpectations(t)
 }
 
 func TestDownloaderAsTask(t *testing.T) {
 	t.Parallel()
 
-	cli := new(dummyClient)
-	d, err := drawin.NewDownloader(cli)
+	outDir := output.NewDirectory(t.TempDir())
+	h := setupHandler(urls)
+
+	d, err := drawin.NewDownloader(outDir, drawin.WithHandlers(h))
 	require.NoError(t, err)
 
 	dfn := taskfn.SliceToSlice(d.AsTask())
-
-	setupClient(cli, urls)
 
 	reps, err := dfn(context.Background(), urls)
 	require.NoError(t, err)

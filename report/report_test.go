@@ -1,4 +1,4 @@
-package drawin_test
+package report_test
 
 import (
 	"errors"
@@ -6,48 +6,48 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/hiroara/drawin"
 	"github.com/hiroara/drawin/job"
+	"github.com/hiroara/drawin/report"
 )
 
-func TestDownloadedReport(t *testing.T) {
+func TestDownloaded(t *testing.T) {
 	t.Parallel()
 
 	j := &job.Job{Name: "image1.jpg"}
 
-	dr := drawin.DownloadedReport(j, 256)
+	dr := report.Downloaded(j, 256)
 	if assert.NotNil(t, dr) {
 		assert.Equal(t, *j, dr.Job)
-		assert.Equal(t, drawin.DownloadedResult, dr.Result)
+		assert.Equal(t, report.DownloadedResult, dr.Result)
 		assert.Equal(t, int64(256), dr.ContentLength)
 		assert.Empty(t, dr.Failure)
 	}
 }
 
-func TestCachedReport(t *testing.T) {
+func TestCached(t *testing.T) {
 	t.Parallel()
 
 	j := &job.Job{Name: "image1.jpg"}
 
-	dr := drawin.CachedReport(j, 512)
+	dr := report.Cached(j, 512)
 	if assert.NotNil(t, dr) {
 		assert.Equal(t, *j, dr.Job)
-		assert.Equal(t, drawin.CachedResult, dr.Result)
+		assert.Equal(t, report.CachedResult, dr.Result)
 		assert.Equal(t, int64(512), dr.ContentLength)
 		assert.Empty(t, dr.Failure)
 	}
 }
 
-func TestFailedReport(t *testing.T) {
+func TestFailed(t *testing.T) {
 	t.Parallel()
 
 	j := &job.Job{Name: "image1.jpg"}
 	err := errors.New("test error")
 
-	dr := drawin.FailedReport(j, err, true)
+	dr := report.Failed(j, err, true)
 	if assert.NotNil(t, dr) {
 		assert.Equal(t, *j, dr.Job)
-		assert.Equal(t, drawin.FailedResult, dr.Result)
+		assert.Equal(t, report.FailedResult, dr.Result)
 		assert.Empty(t, dr.ContentLength)
 		if assert.NotEmpty(t, dr.Failure) {
 			assert.Equal(t, err.Error(), dr.Failure.Error)

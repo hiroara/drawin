@@ -5,34 +5,36 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hiroara/drawin"
 	"github.com/hiroara/drawin/handler"
 	"github.com/hiroara/drawin/job"
+	"github.com/hiroara/drawin/output"
+	"github.com/hiroara/drawin/report"
+	"github.com/hiroara/drawin/retry"
 )
 
 var downloadFailure = errors.New("Download failed.")
 
 type Client struct {
-	out      drawin.Output
+	out      output.Output
 	handlers []handler.Handler
-	retry    *drawin.RetryConfig
+	retry    *retry.RetryConfig
 }
 
-func New(out drawin.Output, handlers []handler.Handler, retry *drawin.RetryConfig) *Client {
+func New(out output.Output, handlers []handler.Handler, retry *retry.RetryConfig) *Client {
 	if handlers == nil {
 		handlers = handler.DefaultHandlers
 	}
 	return &Client{out: out, handlers: handlers, retry: retry}
 }
 
-func Build(out drawin.Output, handlers []handler.Handler, retry *drawin.RetryConfig) (*Client, error) {
+func Build(out output.Output, handlers []handler.Handler, retry *retry.RetryConfig) (*Client, error) {
 	if err := out.Initialize(); err != nil {
 		return nil, err
 	}
 	return New(out, handlers, retry), nil
 }
 
-func (cli *Client) Download(ctx context.Context, j *job.Job) (*drawin.Report, error) {
+func (cli *Client) Download(ctx context.Context, j *job.Job) (*report.Report, error) {
 	rep, err := cli.out.Get(j)
 	if err != nil {
 		return nil, err
@@ -44,13 +46,13 @@ func (cli *Client) Download(ctx context.Context, j *job.Job) (*drawin.Report, er
 	}
 
 	if cli.useCache(rep) {
-		rep.Result = drawin.CachedResult
+		rep.Result = report.CachedResult
 		return rep, nil
 	}
 
 	bs, err := h.Get(ctx, j)
 	if err != nil {
-		rep := drawin.FailedReport(j, err, !h.ShouldRetry(err))
+		rep := report.Failed(j, err, !h.ShouldRetry(err))
 
 		if err := cli.out.Add(rep, bs); err != nil {
 			return nil, err
@@ -59,7 +61,7 @@ func (cli *Client) Download(ctx context.Context, j *job.Job) (*drawin.Report, er
 		return rep, nil
 	}
 
-	rep = drawin.DownloadedReport(j, int64(len(bs)))
+	rep = report.Downloaded(j, int64(len(bs)))
 
 	if err := cli.out.Add(rep, bs); err != nil {
 		return nil, err
@@ -79,16 +81,16 @@ func (cli *Client) selectHandler(j *job.Job) (handler.Handler, error) {
 	return nil, fmt.Errorf("%w for job: %s (URL: %s)", errNoMatchingHandler, j.Name, j.URL)
 }
 
-func (cli *Client) useCache(rep *drawin.Report) bool {
+func (cli *Client) useCache(rep *report.Report) bool {
 	if rep == nil {
 		return false
 	}
 	return !shouldRetry(cli.retry, rep)
 }
 
-func shouldRetry(cfg *drawin.RetryConfig, rep *drawin.Report) bool {
+func shouldRetry(cfg *retry.RetryConfig, rep *report.Report) bool {
 	if cfg == nil || cfg.ShouldRetry == nil {
-		return drawin.DefaultRetryConfig.ShouldRetry(rep)
+		return retry.DefaultRetryConfig.ShouldRetry(rep)
 	}
 	return cfg.ShouldRetry(rep)
 }

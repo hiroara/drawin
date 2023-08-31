@@ -11,8 +11,10 @@ import (
 	"github.com/hiroara/carbo/task"
 
 	"github.com/hiroara/drawin/database"
+	"github.com/hiroara/drawin/internal/client"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/marshal"
+	"github.com/hiroara/drawin/output"
 )
 
 type Client interface {
@@ -28,7 +30,7 @@ type Downloader struct {
 
 var cacheBucket = []byte("drawin-cache")
 
-func NewDownloader(cli Client, opts ...Option) (*Downloader, error) {
+func NewDownloader(out output.Output, opts ...Option) (*Downloader, error) {
 	f, err := os.CreateTemp("", "drawin-*.db")
 	if err != nil {
 		return nil, err
@@ -39,6 +41,13 @@ func NewDownloader(cli Client, opts ...Option) (*Downloader, error) {
 		return nil, err
 	}
 	cacheSDB, err := database.Single[*job.Job](cacheDB, cacheBucket, marshal.Msgpack[*job.Job]())
+
+	cfg := newConfig(opts...)
+
+	cli := client.New(out, cfg.handlers, cfg.retry)
+	if err := out.Initialize(); err != nil {
+		return nil, err
+	}
 
 	return &Downloader{
 		client:    cli,

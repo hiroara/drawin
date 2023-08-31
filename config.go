@@ -2,6 +2,7 @@ package drawin
 
 import (
 	"github.com/hiroara/drawin/handler"
+	"github.com/hiroara/drawin/retry"
 )
 
 type Option func(*config)
@@ -18,7 +19,7 @@ func WithHandlers(hs ...handler.Handler) Option {
 	}
 }
 
-func WithRetryConfig(retry *RetryConfig) Option {
+func WithRetryConfig(retry *retry.RetryConfig) Option {
 	return func(cfg *config) {
 		cfg.retry = retry
 	}
@@ -28,7 +29,7 @@ type config struct {
 	concurrency int
 	batchSize   int
 	handlers    []handler.Handler
-	retry       *RetryConfig
+	retry       *retry.RetryConfig
 }
 
 func newConfig(opts ...Option) *config {

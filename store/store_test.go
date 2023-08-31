@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 	bolt "go.etcd.io/bbolt"
 
-	"github.com/hiroara/drawin"
 	"github.com/hiroara/drawin/database"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/marshal"
+	"github.com/hiroara/drawin/report"
 	"github.com/hiroara/drawin/store"
 )
 
@@ -48,7 +48,7 @@ func TestStore(t *testing.T) {
 
 		db, s := buildStore(t)
 
-		require.NoError(t, s.Add(drawin.DownloadedReport(j, int64(len(data))), data))
+		require.NoError(t, s.Add(report.Downloaded(j, int64(len(data))), data))
 
 		require.NoError(t, db.View(func(tx *bolt.Tx) error {
 			imgs := tx.Bucket([]byte("images"))
@@ -57,7 +57,7 @@ func TestStore(t *testing.T) {
 
 			reps := tx.Bucket([]byte("reports"))
 			bs := reps.Get([]byte(j.URL))
-			rep, err := marshal.Msgpack[*drawin.Report]().Unmarshal(bs)
+			rep, err := marshal.Msgpack[*report.Report]().Unmarshal(bs)
 			require.NoError(t, err)
 			assert.Equal(t, "file1.txt", rep.Name)
 			return nil
@@ -66,7 +66,7 @@ func TestStore(t *testing.T) {
 		rep, err := s.Get(j)
 		require.NoError(t, err)
 		if assert.NotNil(t, rep) {
-			assert.Equal(t, drawin.DownloadedResult, rep.Result)
+			assert.Equal(t, report.DownloadedResult, rep.Result)
 			assert.Equal(t, int64(len(data)), rep.ContentLength)
 		}
 
@@ -82,12 +82,12 @@ func TestStore(t *testing.T) {
 
 		_, s := buildStore(t)
 
-		require.NoError(t, s.Add(drawin.FailedReport(j, errors.New("test error"), true), nil))
+		require.NoError(t, s.Add(report.Failed(j, errors.New("test error"), true), nil))
 
 		rep, err := s.Get(j)
 		require.NoError(t, err)
 		if assert.NotNil(t, rep) {
-			assert.Equal(t, drawin.FailedResult, rep.Result)
+			assert.Equal(t, report.FailedResult, rep.Result)
 		}
 
 		bs, err := s.Read(rep)

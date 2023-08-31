@@ -1,11 +1,5 @@
 package drawin
 
-import (
-	"github.com/hiroara/drawin/job"
-)
+import "github.com/hiroara/drawin/output"
 
-type Output interface {
-	Add(*Report, []byte) error
-	Get(*job.Job) (*Report, error)
-	Initialize() error
-}
+type Output = output.Output

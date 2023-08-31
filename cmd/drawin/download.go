@@ -10,7 +10,6 @@ import (
 	"github.com/hiroara/carbo/task"
 
 	"github.com/hiroara/drawin"
-	"github.com/hiroara/drawin/client"
 	"github.com/hiroara/drawin/internal/reporter"
 	"github.com/hiroara/drawin/output"
 	"github.com/hiroara/drawin/reader"
@@ -38,11 +37,6 @@ func runDownload(paths []string, outStr, reportPath string, concurrency int) (*f
 		out = output.NewDirectory(o.path)
 	}
 
-	cli, err := client.Build(out, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
 	repr, err := reporter.OpenJSON(reportPath)
 	if err != nil {
 		return nil, err
@@ -63,7 +57,7 @@ func runDownload(paths []string, outStr, reportPath string, concurrency int) (*f
 		0,
 	)
 
-	d, err := drawin.NewDownloader(cli)
+	d, err := drawin.NewDownloader(out)
 	if err != nil {
 		return nil, err
 	}
