@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/hiroara/drawin"
 	"github.com/hiroara/drawin/client"
-	"github.com/hiroara/drawin/downloader/report"
 	"github.com/hiroara/drawin/job"
 )
 
@@ -33,7 +33,7 @@ func TestCustomHandler(t *testing.T) {
 	rep, err := cli.Download(ctx, j)
 	require.NoError(t, err)
 	if assert.NotNil(t, rep) {
-		assert.Equal(t, report.DownloadedResult, rep.Result)
+		assert.Equal(t, drawin.DownloadedResult, rep.Result)
 		assert.Equal(t, int64(len(data)), rep.ContentLength)
 	}
 	h.AssertExpectations(t)

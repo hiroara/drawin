@@ -5,7 +5,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/hiroara/drawin/downloader/report"
+	"github.com/hiroara/drawin"
 )
 
 type jsonReporter struct {
@@ -32,11 +32,11 @@ func OpenJSON(path string) (Reporter, error) {
 	return NewJSON(f), nil
 }
 
-func (r *jsonReporter) Write(rep *report.Report) error {
+func (r *jsonReporter) Write(rep *drawin.Report) error {
 	return r.write(rep)
 }
 
-func (r *jsonReporter) write(rep *report.Report) error {
+func (r *jsonReporter) write(rep *drawin.Report) error {
 	return r.writer.Encode(rep)
 }
 

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/hiroara/drawin/downloader/report"
+	"github.com/hiroara/drawin"
 	"github.com/hiroara/drawin/internal/reporter"
 	"github.com/hiroara/drawin/job"
 )
@@ -21,8 +21,8 @@ func TestJSONReporter(t *testing.T) {
 	rep, err := reporter.OpenJSON(path)
 	require.NoError(t, err)
 
-	rep.Write(report.Downloaded(&job.Job{Name: "image1.jpg"}, 256))
-	rep.Write(report.Cached(&job.Job{Name: "image2.jpg"}, 512))
+	rep.Write(drawin.Downloaded(&job.Job{Name: "image1.jpg"}, 256))
+	rep.Write(drawin.Cached(&job.Job{Name: "image2.jpg"}, 512))
 
 	require.NoError(t, rep.Close())
 

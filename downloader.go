@@ -10,13 +10,12 @@ import (
 	"github.com/hiroara/carbo/source"
 	"github.com/hiroara/carbo/task"
 	"github.com/hiroara/drawin/database"
-	"github.com/hiroara/drawin/downloader/report"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/marshal"
 )
 
 type Client interface {
-	Download(ctx context.Context, j *job.Job) (*report.Report, error)
+	Download(ctx context.Context, j *job.Job) (*Report, error)
 }
 
 type Downloader struct {
@@ -48,7 +47,7 @@ func New(cli Client, opts ...Option) (*Downloader, error) {
 	}, nil
 }
 
-func (d *Downloader) Run(ctx context.Context, urls <-chan string, out chan<- *report.Report) error {
+func (d *Downloader) Run(ctx context.Context, urls <-chan string, out chan<- *Report) error {
 	f, err := d.downloadFlow(urls, out)
 	if err != nil {
 		return err
@@ -57,7 +56,7 @@ func (d *Downloader) Run(ctx context.Context, urls <-chan string, out chan<- *re
 	return f.Run(ctx)
 }
 
-func (d *Downloader) downloadFlow(urls <-chan string, out chan<- *report.Report) (*flow.Flow, error) {
+func (d *Downloader) downloadFlow(urls <-chan string, out chan<- *Report) (*flow.Flow, error) {
 	src := source.FromChan(urls)
 	urlBatches := task.Connect(
 		src.AsTask(),
@@ -114,6 +113,6 @@ func (d *Downloader) Close() error {
 	return nil
 }
 
-func (d *Downloader) AsTask() task.Task[string, *report.Report] {
+func (d *Downloader) AsTask() task.Task[string, *Report] {
 	return task.FromFn(d.Run)
 }

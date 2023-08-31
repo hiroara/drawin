@@ -12,8 +12,8 @@ import (
 	"github.com/hiroara/carbo/sink"
 	"github.com/hiroara/carbo/source"
 	"github.com/hiroara/carbo/task"
+	"github.com/hiroara/drawin"
 	"github.com/hiroara/drawin/database"
-	"github.com/hiroara/drawin/downloader/report"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/store"
 )
@@ -21,12 +21,12 @@ import (
 var errNoMatchingReport = errors.New("report not found")
 var errNoSuccessfulReport = errors.New("report found but its content has not been downloaded")
 
-func getReports(s *store.Store, urls []string) source.Source[*report.Report] {
+func getReports(s *store.Store, urls []string) source.Source[*drawin.Report] {
 	src := source.FromSlice(urls)
 
 	return task.Connect(
 		src.AsTask(),
-		pipe.Map(func(ctx context.Context, url string) (*report.Report, error) {
+		pipe.Map(func(ctx context.Context, url string) (*drawin.Report, error) {
 			rep, err := s.Get(&job.Job{URL: url})
 			if err != nil {
 				return nil, err
@@ -51,7 +51,7 @@ func runReport(path string, urls []string) (*flow.Flow, error) {
 	enc := json.NewEncoder(os.Stdout)
 	sin := task.Connect(
 		reps.AsTask(),
-		sink.ElementWise(func(ctx context.Context, rep *report.Report) error {
+		sink.ElementWise(func(ctx context.Context, rep *drawin.Report) error {
 			return enc.Encode(rep)
 		}).AsTask(),
 		0,

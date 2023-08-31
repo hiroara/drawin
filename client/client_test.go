@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/hiroara/drawin"
 	"github.com/hiroara/drawin/client"
-	"github.com/hiroara/drawin/downloader/report"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/store"
 )
@@ -54,12 +54,12 @@ func TestDownload(t *testing.T) {
 		rep, err := cli.Download(context.Background(), j)
 		require.NoError(t, err)
 		assert.Equal(t, *j, rep.Job)
-		assert.Equal(t, report.DownloadedResult, rep.Result)
+		assert.Equal(t, drawin.DownloadedResult, rep.Result)
 
 		rep, err = s.Get(j)
 		require.NoError(t, err)
 		if assert.NotNil(t, rep) {
-			assert.Equal(t, report.DownloadedResult, rep.Result)
+			assert.Equal(t, drawin.DownloadedResult, rep.Result)
 		}
 
 		data, err := s.Read(rep)
@@ -71,7 +71,7 @@ func TestDownload(t *testing.T) {
 		rep, err = cli.Download(context.Background(), j)
 		require.NoError(t, err)
 		assert.Equal(t, *j, rep.Job)
-		assert.Equal(t, report.CachedResult, rep.Result)
+		assert.Equal(t, drawin.CachedResult, rep.Result)
 	})
 
 	t.Run("ResponseStatusCode=NotFound", func(t *testing.T) {
@@ -90,12 +90,12 @@ func TestDownload(t *testing.T) {
 		j := &job.Job{Name: "image1.jpg", URL: srv.URL}
 		rep, err := cli.Download(context.Background(), j)
 		require.NoError(t, err)
-		assert.Equal(t, report.FailedResult, rep.Result)
+		assert.Equal(t, drawin.FailedResult, rep.Result)
 
 		rep, err = s.Get(j)
 		require.NoError(t, err)
 		if assert.NotNil(t, rep) {
-			assert.Equal(t, report.FailedResult, rep.Result)
+			assert.Equal(t, drawin.FailedResult, rep.Result)
 		}
 
 		data, err := s.Read(rep)

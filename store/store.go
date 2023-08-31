@@ -3,8 +3,8 @@ package store
 import (
 	bolt "go.etcd.io/bbolt"
 
+	"github.com/hiroara/drawin"
 	"github.com/hiroara/drawin/database"
-	"github.com/hiroara/drawin/downloader/report"
 	"github.com/hiroara/drawin/job"
 )
 
@@ -36,14 +36,14 @@ func (s *Store) Initialize() error {
 	})
 }
 
-func (s *Store) Add(rep *report.Report, data []byte) error {
+func (s *Store) Add(rep *drawin.Report, data []byte) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		return newBucketSet(tx).put(rep, data)
 	})
 }
 
-func (s *Store) Get(j *job.Job) (*report.Report, error) {
-	var rep *report.Report
+func (s *Store) Get(j *job.Job) (*drawin.Report, error) {
+	var rep *drawin.Report
 
 	err := s.db.View(func(tx *bolt.Tx) error {
 		r, err := newReportBucket(tx).Get([]byte(j.URL))
@@ -60,7 +60,7 @@ func (s *Store) Get(j *job.Job) (*report.Report, error) {
 	return rep, nil
 }
 
-func (s *Store) Read(rep *report.Report) ([]byte, error) {
+func (s *Store) Read(rep *drawin.Report) ([]byte, error) {
 	var blob []byte
 	err := s.db.View(func(tx *bolt.Tx) error {
 		bs, err := newImageBucket(tx).Get([]byte(rep.URL))

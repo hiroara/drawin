@@ -3,10 +3,10 @@ package reporter
 import (
 	"io"
 
-	"github.com/hiroara/drawin/downloader/report"
+	"github.com/hiroara/drawin"
 )
 
 type Reporter interface {
 	io.Closer
-	Write(*report.Report) error
+	Write(*drawin.Report) error
 }

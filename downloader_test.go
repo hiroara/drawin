@@ -10,7 +10,6 @@ import (
 
 	"github.com/hiroara/carbo/taskfn"
 	"github.com/hiroara/drawin"
-	"github.com/hiroara/drawin/downloader/report"
 	"github.com/hiroara/drawin/job"
 )
 
@@ -18,9 +17,9 @@ type dummyClient struct {
 	mock.Mock
 }
 
-func (cli *dummyClient) Download(ctx context.Context, j *job.Job) (*report.Report, error) {
+func (cli *dummyClient) Download(ctx context.Context, j *job.Job) (*drawin.Report, error) {
 	args := cli.Mock.Called(ctx, j)
-	return args.Get(0).(*report.Report), args.Error(1)
+	return args.Get(0).(*drawin.Report), args.Error(1)
 }
 
 var urls = []string{
@@ -37,8 +36,8 @@ func setupClient(cli *dummyClient, urls []string) {
 		return j.URL == urls[1]
 	})
 
-	cli.On("Download", mock.Anything, jobExpectation1).Return(report.Downloaded(&job.Job{Name: "image1.jpg", URL: urls[0]}, 1024), nil).Once()
-	cli.On("Download", mock.Anything, jobExpectation2).Return(report.Downloaded(&job.Job{Name: "image2.jpg", URL: urls[1]}, 1024), nil).Once()
+	cli.On("Download", mock.Anything, jobExpectation1).Return(drawin.Downloaded(&job.Job{Name: "image1.jpg", URL: urls[0]}, 1024), nil).Once()
+	cli.On("Download", mock.Anything, jobExpectation2).Return(drawin.Downloaded(&job.Job{Name: "image2.jpg", URL: urls[1]}, 1024), nil).Once()
 }
 
 func TestDownloader(t *testing.T) {
@@ -57,7 +56,7 @@ func TestDownloader(t *testing.T) {
 
 	ctx := context.Background()
 
-	out := make(chan *report.Report, 2)
+	out := make(chan *drawin.Report, 2)
 
 	require.NoError(t, d.Run(ctx, urlsC, out))
 

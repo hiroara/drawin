@@ -11,7 +11,6 @@ import (
 
 	"github.com/hiroara/drawin"
 	"github.com/hiroara/drawin/client"
-	"github.com/hiroara/drawin/downloader/report"
 	"github.com/hiroara/drawin/internal/reporter"
 	"github.com/hiroara/drawin/reader"
 	"github.com/hiroara/drawin/store"
@@ -78,7 +77,7 @@ func runDownload(paths []string, outStr, reportPath string, concurrency int) (*f
 
 	sin := task.Connect(
 		reps,
-		sink.ElementWise(func(ctx context.Context, rep *report.Report) error { return repr.Write(rep) }).AsTask(),
+		sink.ElementWise(func(ctx context.Context, rep *drawin.Report) error { return repr.Write(rep) }).AsTask(),
 		0,
 	)
 

@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/hiroara/drawin"
 	"github.com/hiroara/drawin/client"
-	"github.com/hiroara/drawin/downloader/report"
 	"github.com/hiroara/drawin/job"
 )
 
@@ -43,7 +43,7 @@ func TestDirectoryOutput(t *testing.T) {
 		dir, out := buildOutput(t)
 		require.NoError(t, out.Initialize())
 
-		require.NoError(t, out.Add(report.Downloaded(j, int64(len(data))), data))
+		require.NoError(t, out.Add(drawin.Downloaded(j, int64(len(data))), data))
 
 		f, err := os.Open(filepath.Join(dir, "file1.txt"))
 		assert.NoError(t, err)
@@ -54,7 +54,7 @@ func TestDirectoryOutput(t *testing.T) {
 		rep, err := out.Get(j)
 		require.NoError(t, err)
 		if assert.NotNil(t, rep) {
-			assert.Equal(t, report.CachedResult, rep.Result)
+			assert.Equal(t, drawin.CachedResult, rep.Result)
 			assert.Equal(t, int64(len(data)), rep.ContentLength)
 		}
 	})
@@ -65,7 +65,7 @@ func TestDirectoryOutput(t *testing.T) {
 		dir, out := buildOutput(t)
 		require.NoError(t, out.Initialize())
 
-		require.NoError(t, out.Add(report.Failed(j, errors.New("test error"), true), nil))
+		require.NoError(t, out.Add(drawin.Failed(j, errors.New("test error"), true), nil))
 		_, err := os.Stat(filepath.Join(dir, "file1.txt"))
 		require.ErrorIs(t, err, os.ErrNotExist)
 	})

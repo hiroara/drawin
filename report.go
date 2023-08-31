@@ -1,4 +1,4 @@
-package report
+package drawin
 
 import "github.com/hiroara/drawin/job"
 
