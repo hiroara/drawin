@@ -14,15 +14,15 @@ type Failure struct {
 	Error     string `json:"error"`
 }
 
-func Downloaded(j *job.Job, contentLength int64) *Report {
+func DownloadedReport(j *job.Job, contentLength int64) *Report {
 	return &Report{Job: *j, Result: DownloadedResult, ContentLength: contentLength}
 }
 
-func Cached(j *job.Job, contentLength int64) *Report {
+func CachedReport(j *job.Job, contentLength int64) *Report {
 	return &Report{Job: *j, Result: CachedResult, ContentLength: contentLength}
 }
 
-func Failed(j *job.Job, err error, permanent bool) *Report {
+func FailedReport(j *job.Job, err error, permanent bool) *Report {
 	return &Report{Job: *j, Result: FailedResult, Failure: &Failure{Permanent: permanent, Error: err.Error()}}
 }
 

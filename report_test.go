@@ -15,7 +15,7 @@ func TestDownloadedReport(t *testing.T) {
 
 	j := &job.Job{Name: "image1.jpg"}
 
-	dr := drawin.Downloaded(j, 256)
+	dr := drawin.DownloadedReport(j, 256)
 	if assert.NotNil(t, dr) {
 		assert.Equal(t, *j, dr.Job)
 		assert.Equal(t, drawin.DownloadedResult, dr.Result)
@@ -29,7 +29,7 @@ func TestCachedReport(t *testing.T) {
 
 	j := &job.Job{Name: "image1.jpg"}
 
-	dr := drawin.Cached(j, 512)
+	dr := drawin.CachedReport(j, 512)
 	if assert.NotNil(t, dr) {
 		assert.Equal(t, *j, dr.Job)
 		assert.Equal(t, drawin.CachedResult, dr.Result)
@@ -44,7 +44,7 @@ func TestFailedReport(t *testing.T) {
 	j := &job.Job{Name: "image1.jpg"}
 	err := errors.New("test error")
 
-	dr := drawin.Failed(j, err, true)
+	dr := drawin.FailedReport(j, err, true)
 	if assert.NotNil(t, dr) {
 		assert.Equal(t, *j, dr.Job)
 		assert.Equal(t, drawin.FailedResult, dr.Result)

@@ -43,7 +43,7 @@ func TestDirectoryOutput(t *testing.T) {
 		dir, out := buildOutput(t)
 		require.NoError(t, out.Initialize())
 
-		require.NoError(t, out.Add(drawin.Downloaded(j, int64(len(data))), data))
+		require.NoError(t, out.Add(drawin.DownloadedReport(j, int64(len(data))), data))
 
 		f, err := os.Open(filepath.Join(dir, "file1.txt"))
 		assert.NoError(t, err)
@@ -65,7 +65,7 @@ func TestDirectoryOutput(t *testing.T) {
 		dir, out := buildOutput(t)
 		require.NoError(t, out.Initialize())
 
-		require.NoError(t, out.Add(drawin.Failed(j, errors.New("test error"), true), nil))
+		require.NoError(t, out.Add(drawin.FailedReport(j, errors.New("test error"), true), nil))
 		_, err := os.Stat(filepath.Join(dir, "file1.txt"))
 		require.ErrorIs(t, err, os.ErrNotExist)
 	})

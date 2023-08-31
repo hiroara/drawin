@@ -56,7 +56,7 @@ func (cli *Client) Download(ctx context.Context, j *job.Job) (*drawin.Report, er
 
 	bs, err := h.Get(ctx, j)
 	if err != nil {
-		rep := drawin.Failed(j, err, !h.ShouldRetry(err))
+		rep := drawin.FailedReport(j, err, !h.ShouldRetry(err))
 
 		if err := cli.out.Add(rep, bs); err != nil {
 			return nil, err
@@ -65,7 +65,7 @@ func (cli *Client) Download(ctx context.Context, j *job.Job) (*drawin.Report, er
 		return rep, nil
 	}
 
-	rep = drawin.Downloaded(j, int64(len(bs)))
+	rep = drawin.DownloadedReport(j, int64(len(bs)))
 
 	if err := cli.out.Add(rep, bs); err != nil {
 		return nil, err

@@ -9,6 +9,7 @@ import (
 	"github.com/hiroara/carbo/sink"
 	"github.com/hiroara/carbo/source"
 	"github.com/hiroara/carbo/task"
+
 	"github.com/hiroara/drawin/database"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/marshal"
@@ -27,7 +28,7 @@ type Downloader struct {
 
 var cacheBucket = []byte("drawin-cache")
 
-func New(cli Client, opts ...Option) (*Downloader, error) {
+func NewDownloader(cli Client, opts ...Option) (*Downloader, error) {
 	f, err := os.CreateTemp("", "drawin-*.db")
 	if err != nil {
 		return nil, err

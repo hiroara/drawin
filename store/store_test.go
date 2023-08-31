@@ -48,7 +48,7 @@ func TestStore(t *testing.T) {
 
 		db, s := buildStore(t)
 
-		require.NoError(t, s.Add(drawin.Downloaded(j, int64(len(data))), data))
+		require.NoError(t, s.Add(drawin.DownloadedReport(j, int64(len(data))), data))
 
 		require.NoError(t, db.View(func(tx *bolt.Tx) error {
 			imgs := tx.Bucket([]byte("images"))
@@ -82,7 +82,7 @@ func TestStore(t *testing.T) {
 
 		_, s := buildStore(t)
 
-		require.NoError(t, s.Add(drawin.Failed(j, errors.New("test error"), true), nil))
+		require.NoError(t, s.Add(drawin.FailedReport(j, errors.New("test error"), true), nil))
 
 		rep, err := s.Get(j)
 		require.NoError(t, err)

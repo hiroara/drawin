@@ -28,7 +28,7 @@ func (out *DirectoryOutput) Add(rep *drawin.Report, data []byte) error {
 func (out *DirectoryOutput) Get(j *job.Job) (*drawin.Report, error) {
 	stat, err := os.Stat(out.fullpath(j.Name))
 	if err == nil { // File exists
-		return drawin.Cached(j, stat.Size()), nil
+		return drawin.CachedReport(j, stat.Size()), nil
 	}
 	if errors.Is(err, os.ErrNotExist) {
 		return nil, nil

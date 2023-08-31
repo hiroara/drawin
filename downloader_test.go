@@ -36,15 +36,15 @@ func setupClient(cli *dummyClient, urls []string) {
 		return j.URL == urls[1]
 	})
 
-	cli.On("Download", mock.Anything, jobExpectation1).Return(drawin.Downloaded(&job.Job{Name: "image1.jpg", URL: urls[0]}, 1024), nil).Once()
-	cli.On("Download", mock.Anything, jobExpectation2).Return(drawin.Downloaded(&job.Job{Name: "image2.jpg", URL: urls[1]}, 1024), nil).Once()
+	cli.On("Download", mock.Anything, jobExpectation1).Return(drawin.DownloadedReport(&job.Job{Name: "image1.jpg", URL: urls[0]}, 1024), nil).Once()
+	cli.On("Download", mock.Anything, jobExpectation2).Return(drawin.DownloadedReport(&job.Job{Name: "image2.jpg", URL: urls[1]}, 1024), nil).Once()
 }
 
 func TestDownloader(t *testing.T) {
 	t.Parallel()
 
 	cli := new(dummyClient)
-	d, err := drawin.New(cli)
+	d, err := drawin.NewDownloader(cli)
 	require.NoError(t, err)
 
 	urlsC := make(chan string, 2)
@@ -73,7 +73,7 @@ func TestDownloaderAsTask(t *testing.T) {
 	t.Parallel()
 
 	cli := new(dummyClient)
-	d, err := drawin.New(cli)
+	d, err := drawin.NewDownloader(cli)
 	require.NoError(t, err)
 
 	dfn := taskfn.SliceToSlice(d.AsTask())

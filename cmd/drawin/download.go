@@ -62,7 +62,7 @@ func runDownload(paths []string, outStr, reportPath string, concurrency int) (*f
 		0,
 	)
 
-	d, err := drawin.New(cli)
+	d, err := drawin.NewDownloader(cli)
 	if err != nil {
 		return nil, err
 	}
