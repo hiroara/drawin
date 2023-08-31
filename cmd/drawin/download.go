@@ -12,6 +12,7 @@ import (
 	"github.com/hiroara/drawin"
 	"github.com/hiroara/drawin/client"
 	"github.com/hiroara/drawin/internal/reporter"
+	"github.com/hiroara/drawin/output"
 	"github.com/hiroara/drawin/reader"
 	"github.com/hiroara/drawin/store"
 )
@@ -22,7 +23,7 @@ func runDownload(paths []string, outStr, reportPath string, concurrency int) (*f
 		return nil, err
 	}
 
-	var out client.Output
+	var out drawin.Output
 	closeOut := func() {}
 	switch o.typ {
 	case storeType:
@@ -34,7 +35,7 @@ func runDownload(paths []string, outStr, reportPath string, concurrency int) (*f
 		out = s
 		closeOut = func() { s.Close() }
 	case directoryType:
-		out = client.NewDirectory(o.path)
+		out = output.NewDirectory(o.path)
 	}
 
 	cli, err := client.Build(out, nil, nil)

@@ -13,25 +13,19 @@ import (
 var downloadFailure = errors.New("Download failed.")
 
 type Client struct {
-	out      Output
+	out      drawin.Output
 	handlers []handler.Handler
 	retry    *drawin.RetryConfig
 }
 
-type Output interface {
-	Add(*drawin.Report, []byte) error
-	Get(*job.Job) (*drawin.Report, error)
-	Initialize() error
-}
-
-func New(out Output, handlers []handler.Handler, retry *drawin.RetryConfig) *Client {
+func New(out drawin.Output, handlers []handler.Handler, retry *drawin.RetryConfig) *Client {
 	if handlers == nil {
 		handlers = handler.DefaultHandlers
 	}
 	return &Client{out: out, handlers: handlers, retry: retry}
 }
 
-func Build(out Output, handlers []handler.Handler, retry *drawin.RetryConfig) (*Client, error) {
+func Build(out drawin.Output, handlers []handler.Handler, retry *drawin.RetryConfig) (*Client, error) {
 	if err := out.Initialize(); err != nil {
 		return nil, err
 	}

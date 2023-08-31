@@ -13,6 +13,7 @@ import (
 	"github.com/hiroara/drawin/client"
 	"github.com/hiroara/drawin/handler"
 	"github.com/hiroara/drawin/job"
+	"github.com/hiroara/drawin/output"
 )
 
 type customHandler struct {
@@ -39,7 +40,7 @@ func TestCustomHandler(t *testing.T) {
 
 	ctx := context.Background()
 	dirpath := filepath.Join(t.TempDir(), "test-out")
-	dir := client.NewDirectory(dirpath)
+	dir := output.NewDirectory(dirpath)
 
 	h := &customHandler{}
 	cli, err := client.Build(dir, []handler.Handler{h}, nil)

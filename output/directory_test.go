@@ -1,4 +1,4 @@
-package client_test
+package output_test
 
 import (
 	"errors"
@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/hiroara/drawin"
-	"github.com/hiroara/drawin/client"
 	"github.com/hiroara/drawin/job"
+	"github.com/hiroara/drawin/output"
 )
 
 func TestDirectoryOutput(t *testing.T) {
@@ -21,9 +21,9 @@ func TestDirectoryOutput(t *testing.T) {
 	j := &job.Job{Name: "file1.txt"}
 	data := []byte("test value")
 
-	buildOutput := func(t *testing.T) (string, *client.DirectoryOutput) {
+	buildOutput := func(t *testing.T) (string, *output.DirectoryOutput) {
 		dir := filepath.Join(t.TempDir(), "out")
-		out := client.NewDirectory(dir)
+		out := output.NewDirectory(dir)
 		return dir, out
 	}
 

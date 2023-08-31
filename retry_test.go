@@ -14,11 +14,12 @@ import (
 	"github.com/hiroara/drawin"
 	"github.com/hiroara/drawin/client"
 	"github.com/hiroara/drawin/job"
+	"github.com/hiroara/drawin/output"
 )
 
 func buildClient(t *testing.T, cfg *drawin.RetryConfig) (*client.Client, error) {
 	dirpath := filepath.Join(t.TempDir(), "test-out")
-	dir := client.NewDirectory(dirpath)
+	dir := output.NewDirectory(dirpath)
 
 	return client.Build(dir, nil, cfg)
 }

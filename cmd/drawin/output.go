@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type output struct {
+type outputConfig struct {
 	typ  outputType
 	path string
 }
@@ -22,14 +22,14 @@ var availableOutputTypes = []outputType{directoryType, storeType}
 
 var errNoMatchingOutputType = errors.New("unknown output type is specified")
 
-func parseOutput(s string) (*output, error) {
+func parseOutput(s string) (*outputConfig, error) {
 	ss := strings.SplitN(s, "=", 2)
 	if len(ss) == 0 {
 		return nil, fmt.Errorf("%w: <empty>", errNoMatchingOutputType)
 	}
 
 	if len(ss) == 1 {
-		return &output{typ: directoryType, path: ss[0]}, nil
+		return &outputConfig{typ: directoryType, path: ss[0]}, nil
 	}
 	t := ss[0]
 	v := ss[1]
@@ -43,5 +43,5 @@ func parseOutput(s string) (*output, error) {
 		return nil, fmt.Errorf("%w: %s", errNoMatchingOutputType, s)
 	}
 
-	return &output{typ: outputType(t), path: v}, nil
+	return &outputConfig{typ: outputType(t), path: v}, nil
 }
