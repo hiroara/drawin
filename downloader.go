@@ -1,4 +1,4 @@
-package downloader
+package drawin
 
 import (
 	"context"
@@ -15,17 +15,15 @@ import (
 	"github.com/hiroara/drawin/marshal"
 )
 
+type Client interface {
+	Download(ctx context.Context, j *job.Job) (*report.Report, error)
+}
+
 type Downloader struct {
 	client    Client
 	cache     *database.SingleDB[*job.Job]
 	cacheFile *os.File
 	config    *config
-}
-
-type Report = report.Report
-
-type Client interface {
-	Download(ctx context.Context, j *job.Job) (*Report, error)
 }
 
 var cacheBucket = []byte("drawin-cache")
@@ -50,7 +48,7 @@ func New(cli Client, opts ...Option) (*Downloader, error) {
 	}, nil
 }
 
-func (d *Downloader) Run(ctx context.Context, urls <-chan string, out chan<- *Report) error {
+func (d *Downloader) Run(ctx context.Context, urls <-chan string, out chan<- *report.Report) error {
 	f, err := d.downloadFlow(urls, out)
 	if err != nil {
 		return err
@@ -59,7 +57,7 @@ func (d *Downloader) Run(ctx context.Context, urls <-chan string, out chan<- *Re
 	return f.Run(ctx)
 }
 
-func (d *Downloader) downloadFlow(urls <-chan string, out chan<- *Report) (*flow.Flow, error) {
+func (d *Downloader) downloadFlow(urls <-chan string, out chan<- *report.Report) (*flow.Flow, error) {
 	src := source.FromChan(urls)
 	urlBatches := task.Connect(
 		src.AsTask(),
@@ -116,6 +114,6 @@ func (d *Downloader) Close() error {
 	return nil
 }
 
-func (d *Downloader) AsTask() task.Task[string, *Report] {
+func (d *Downloader) AsTask() task.Task[string, *report.Report] {
 	return task.FromFn(d.Run)
 }

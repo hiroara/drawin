@@ -1,4 +1,4 @@
-package downloader_test
+package drawin_test
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/hiroara/carbo/taskfn"
-	"github.com/hiroara/drawin/downloader"
+	"github.com/hiroara/drawin"
 	"github.com/hiroara/drawin/downloader/report"
 	"github.com/hiroara/drawin/job"
 )
@@ -18,9 +18,9 @@ type dummyClient struct {
 	mock.Mock
 }
 
-func (cli *dummyClient) Download(ctx context.Context, j *job.Job) (*downloader.Report, error) {
+func (cli *dummyClient) Download(ctx context.Context, j *job.Job) (*report.Report, error) {
 	args := cli.Mock.Called(ctx, j)
-	return args.Get(0).(*downloader.Report), args.Error(1)
+	return args.Get(0).(*report.Report), args.Error(1)
 }
 
 var urls = []string{
@@ -45,7 +45,7 @@ func TestDownloader(t *testing.T) {
 	t.Parallel()
 
 	cli := new(dummyClient)
-	d, err := downloader.New(cli)
+	d, err := drawin.New(cli)
 	require.NoError(t, err)
 
 	urlsC := make(chan string, 2)
@@ -57,7 +57,7 @@ func TestDownloader(t *testing.T) {
 
 	ctx := context.Background()
 
-	out := make(chan *downloader.Report, 2)
+	out := make(chan *report.Report, 2)
 
 	require.NoError(t, d.Run(ctx, urlsC, out))
 
@@ -74,7 +74,7 @@ func TestDownloaderAsTask(t *testing.T) {
 	t.Parallel()
 
 	cli := new(dummyClient)
-	d, err := downloader.New(cli)
+	d, err := drawin.New(cli)
 	require.NoError(t, err)
 
 	dfn := taskfn.SliceToSlice(d.AsTask())

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hiroara/drawin/downloader"
 	"github.com/hiroara/drawin/downloader/report"
 	"github.com/hiroara/drawin/job"
 )
@@ -19,8 +18,8 @@ type Client struct {
 }
 
 type Output interface {
-	Add(*downloader.Report, []byte) error
-	Get(*job.Job) (*downloader.Report, error)
+	Add(*report.Report, []byte) error
+	Get(*job.Job) (*report.Report, error)
 	Initialize() error
 }
 
@@ -39,7 +38,7 @@ func Build(out Output, opts ...Option) (*Client, error) {
 	return New(out, opts...), nil
 }
 
-func (cli *Client) Download(ctx context.Context, j *job.Job) (*downloader.Report, error) {
+func (cli *Client) Download(ctx context.Context, j *job.Job) (*report.Report, error) {
 	rep, err := cli.out.Get(j)
 	if err != nil {
 		return nil, err
@@ -86,7 +85,7 @@ func (cli *Client) selectHandler(j *job.Job) (Handler, error) {
 	return nil, fmt.Errorf("%w for job: %s (URL: %s)", errNoMatchingHandler, j.Name, j.URL)
 }
 
-func (cli *Client) useCache(rep *downloader.Report) bool {
+func (cli *Client) useCache(rep *report.Report) bool {
 	if rep == nil {
 		return false
 	}

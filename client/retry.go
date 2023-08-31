@@ -1,16 +1,15 @@
 package client
 
 import (
-	"github.com/hiroara/drawin/downloader"
 	"github.com/hiroara/drawin/downloader/report"
 )
 
 type RetryConfig struct {
-	ShouldRetry func(*downloader.Report) bool
+	ShouldRetry func(*report.Report) bool
 }
 
 var DefaultRetryConfig = &RetryConfig{
-	ShouldRetry: func(rep *downloader.Report) bool {
+	ShouldRetry: func(rep *report.Report) bool {
 		if rep.Result != report.FailedResult {
 			return false
 		}
@@ -18,7 +17,7 @@ var DefaultRetryConfig = &RetryConfig{
 	},
 }
 
-func (cfg *RetryConfig) shouldRetry(rep *downloader.Report) bool {
+func (cfg *RetryConfig) shouldRetry(rep *report.Report) bool {
 	if cfg == nil || cfg.ShouldRetry == nil {
 		return DefaultRetryConfig.ShouldRetry(rep)
 	}

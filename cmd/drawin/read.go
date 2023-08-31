@@ -12,7 +12,6 @@ import (
 	"github.com/hiroara/carbo/task"
 
 	"github.com/hiroara/drawin/database"
-	"github.com/hiroara/drawin/downloader"
 	"github.com/hiroara/drawin/downloader/report"
 	"github.com/hiroara/drawin/store"
 )
@@ -29,7 +28,7 @@ func runRead(path string, urls []string) (*flow.Flow, error) {
 
 	ds := task.Connect(
 		reps.AsTask(),
-		pipe.Map(func(ctx context.Context, rep *downloader.Report) ([]byte, error) {
+		pipe.Map(func(ctx context.Context, rep *report.Report) ([]byte, error) {
 			if rep.Result != report.DownloadedResult {
 				return nil, fmt.Errorf("%w with URL: %s", errNoSuccessfulReport, rep.URL)
 			}

@@ -1,4 +1,12 @@
-package downloader
+package drawin
+
+type Option func(*config)
+
+func WithConcurrency(concurrency int) Option {
+	return func(cfg *config) {
+		cfg.concurrency = concurrency
+	}
+}
 
 type config struct {
 	concurrency int

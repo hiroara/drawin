@@ -9,8 +9,9 @@ import (
 	"github.com/hiroara/carbo/source"
 	"github.com/hiroara/carbo/task"
 
+	"github.com/hiroara/drawin"
 	"github.com/hiroara/drawin/client"
-	"github.com/hiroara/drawin/downloader"
+	"github.com/hiroara/drawin/downloader/report"
 	"github.com/hiroara/drawin/internal/reporter"
 	"github.com/hiroara/drawin/reader"
 	"github.com/hiroara/drawin/store"
@@ -62,7 +63,7 @@ func runDownload(paths []string, outStr, reportPath string, concurrency int) (*f
 		0,
 	)
 
-	d, err := downloader.New(cli)
+	d, err := drawin.New(cli)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +78,7 @@ func runDownload(paths []string, outStr, reportPath string, concurrency int) (*f
 
 	sin := task.Connect(
 		reps,
-		sink.ElementWise(func(ctx context.Context, rep *downloader.Report) error { return repr.Write(rep) }).AsTask(),
+		sink.ElementWise(func(ctx context.Context, rep *report.Report) error { return repr.Write(rep) }).AsTask(),
 		0,
 	)
 

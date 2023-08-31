@@ -10,7 +10,6 @@ import (
 	bolt "go.etcd.io/bbolt"
 
 	"github.com/hiroara/drawin/database"
-	"github.com/hiroara/drawin/downloader"
 	"github.com/hiroara/drawin/downloader/report"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/marshal"
@@ -58,7 +57,7 @@ func TestStore(t *testing.T) {
 
 			reps := tx.Bucket([]byte("reports"))
 			bs := reps.Get([]byte(j.URL))
-			rep, err := marshal.Msgpack[*downloader.Report]().Unmarshal(bs)
+			rep, err := marshal.Msgpack[*report.Report]().Unmarshal(bs)
 			require.NoError(t, err)
 			assert.Equal(t, "file1.txt", rep.Name)
 			return nil

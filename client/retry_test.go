@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/hiroara/drawin/client"
-	"github.com/hiroara/drawin/downloader"
 	"github.com/hiroara/drawin/downloader/report"
 	"github.com/hiroara/drawin/job"
 )
@@ -63,7 +62,7 @@ func TestCustomRetryConfig(t *testing.T) {
 	j := &job.Job{Name: "image1.jpg", URL: srv.URL}
 	cli, err := buildClient(t, &client.RetryConfig{
 		// Always retry
-		ShouldRetry: func(rep *downloader.Report) bool { return true },
+		ShouldRetry: func(rep *report.Report) bool { return true },
 	})
 	require.NoError(t, err)
 
