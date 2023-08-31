@@ -1,4 +1,4 @@
-package client_test
+package handler_test
 
 import (
 	"context"
@@ -6,12 +6,33 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/hiroara/drawin"
 	"github.com/hiroara/drawin/client"
+	"github.com/hiroara/drawin/handler"
 	"github.com/hiroara/drawin/job"
 )
+
+type customHandler struct {
+	mock.Mock
+}
+
+func (h *customHandler) Match(j *job.Job) bool {
+	args := h.Called(j)
+	return args.Bool(0)
+}
+
+func (h *customHandler) ShouldRetry(err error) bool {
+	args := h.Called(err)
+	return args.Bool(0)
+}
+
+func (h *customHandler) Get(ctx context.Context, j *job.Job) ([]byte, error) {
+	args := h.Called(ctx, j)
+	return args.Get(0).([]byte), args.Error(1)
+}
 
 func TestCustomHandler(t *testing.T) {
 	t.Parallel()
@@ -21,7 +42,7 @@ func TestCustomHandler(t *testing.T) {
 	dir := client.NewDirectory(dirpath)
 
 	h := &customHandler{}
-	cli, err := client.Build(dir, client.WithHandlers(h))
+	cli, err := client.Build(dir, []handler.Handler{h})
 	require.NoError(t, err)
 
 	j := &job.Job{Name: "test1.jpg", URL: "https://example.com/test1.jpg"}

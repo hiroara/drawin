@@ -1,4 +1,4 @@
-package client
+package http
 
 import (
 	"context"
@@ -11,26 +11,26 @@ import (
 	"github.com/hiroara/drawin/job"
 )
 
-type HTTPHandler struct {
+type Handler struct {
 	client *http.Client
 }
 
-func NewHTTPHandler(cli *http.Client) *HTTPHandler {
-	return &HTTPHandler{client: cli}
+func New(cli *http.Client) *Handler {
+	return &Handler{client: cli}
 }
 
-func (h *HTTPHandler) Match(j *job.Job) bool {
+func (h *Handler) Match(j *job.Job) bool {
 	return strings.HasPrefix(j.URL, "http://") || strings.HasPrefix(j.URL, "https://")
 }
 
-func (h *HTTPHandler) ShouldRetry(err error) bool {
+func (h *Handler) ShouldRetry(err error) bool {
 	return !errors.Is(err, ErrClientError)
 }
 
 var ErrUnexpectedResponseStatus = errors.New("received unexpected HTTP response status code")
 var ErrClientError = errors.New("received client error response")
 
-func (h *HTTPHandler) Get(ctx context.Context, j *job.Job) ([]byte, error) {
+func (h *Handler) Get(ctx context.Context, j *job.Job) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", j.URL, nil)
 	if err != nil {
 		return nil, err

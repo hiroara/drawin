@@ -1,4 +1,4 @@
-package client_test
+package http_test
 
 import (
 	"context"
@@ -10,14 +10,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/hiroara/drawin/client"
+	httphandler "github.com/hiroara/drawin/handler/http"
 	"github.com/hiroara/drawin/job"
 )
 
-func TestHTTPHandlerMatch(t *testing.T) {
+func TestHandlerMatch(t *testing.T) {
 	t.Parallel()
 
-	cli := client.NewHTTPHandler(http.DefaultClient)
+	cli := httphandler.New(http.DefaultClient)
 
 	assert.True(t, cli.Match(&job.Job{URL: "http://example.com/test1.txt"}))
 	assert.True(t, cli.Match(&job.Job{URL: "https://example.com/test1.txt"}))
@@ -25,7 +25,7 @@ func TestHTTPHandlerMatch(t *testing.T) {
 	assert.False(t, cli.Match(&job.Job{URL: "file:///etc/hosts"}))
 }
 
-func TestHTTPHandlerGet(t *testing.T) {
+func TestHandlerGet(t *testing.T) {
 	t.Parallel()
 
 	t.Run("ResponseStatusCode=Successful", func(t *testing.T) {
@@ -38,7 +38,7 @@ func TestHTTPHandlerGet(t *testing.T) {
 
 		j := &job.Job{Name: "image1.jpg", URL: srv.URL}
 
-		cli := client.NewHTTPHandler(http.DefaultClient)
+		cli := httphandler.New(http.DefaultClient)
 
 		bs, err := cli.Get(context.Background(), j)
 		require.NoError(t, err)
@@ -60,7 +60,7 @@ func TestHTTPHandlerGet(t *testing.T) {
 
 		j := &job.Job{Name: "image1.jpg", URL: srv2.URL}
 
-		cli := client.NewHTTPHandler(http.DefaultClient)
+		cli := httphandler.New(http.DefaultClient)
 
 		bs, err := cli.Get(context.Background(), j)
 		require.NoError(t, err)
@@ -78,10 +78,10 @@ func TestHTTPHandlerGet(t *testing.T) {
 
 		j := &job.Job{Name: "image1.jpg", URL: srv.URL}
 
-		cli := client.NewHTTPHandler(http.DefaultClient)
+		cli := httphandler.New(http.DefaultClient)
 
 		_, err := cli.Get(context.Background(), j)
-		require.ErrorIs(t, err, client.ErrClientError)
+		require.ErrorIs(t, err, httphandler.ErrClientError)
 	})
 
 	t.Run("ResponseStatusCode=Unexpected", func(t *testing.T) {
@@ -95,9 +95,9 @@ func TestHTTPHandlerGet(t *testing.T) {
 
 		j := &job.Job{Name: "image1.jpg", URL: srv.URL}
 
-		cli := client.NewHTTPHandler(http.DefaultClient)
+		cli := httphandler.New(http.DefaultClient)
 
 		_, err := cli.Get(context.Background(), j)
-		require.ErrorIs(t, err, client.ErrUnexpectedResponseStatus)
+		require.ErrorIs(t, err, httphandler.ErrUnexpectedResponseStatus)
 	})
 }

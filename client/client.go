@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/hiroara/drawin"
+	"github.com/hiroara/drawin/handler"
 	"github.com/hiroara/drawin/job"
 )
 
@@ -13,7 +14,7 @@ var downloadFailure = errors.New("Download failed.")
 
 type Client struct {
 	out      Output
-	handlers []Handler
+	handlers []handler.Handler
 	retry    *RetryConfig
 }
 
@@ -23,19 +24,22 @@ type Output interface {
 	Initialize() error
 }
 
-func New(out Output, opts ...Option) *Client {
-	cli := &Client{out: out, handlers: DefaultHandlers}
+func New(out Output, handlers []handler.Handler, opts ...Option) *Client {
+	if handlers == nil {
+		handlers = handler.DefaultHandlers
+	}
+	cli := &Client{out: out, handlers: handlers}
 	for _, opt := range opts {
 		opt(cli)
 	}
 	return cli
 }
 
-func Build(out Output, opts ...Option) (*Client, error) {
+func Build(out Output, handlers []handler.Handler, opts ...Option) (*Client, error) {
 	if err := out.Initialize(); err != nil {
 		return nil, err
 	}
-	return New(out, opts...), nil
+	return New(out, handlers, opts...), nil
 }
 
 func (cli *Client) Download(ctx context.Context, j *job.Job) (*drawin.Report, error) {
@@ -76,7 +80,7 @@ func (cli *Client) Download(ctx context.Context, j *job.Job) (*drawin.Report, er
 
 var errNoMatchingHandler = errors.New("no matching handler is found")
 
-func (cli *Client) selectHandler(j *job.Job) (Handler, error) {
+func (cli *Client) selectHandler(j *job.Job) (handler.Handler, error) {
 	for _, h := range cli.handlers {
 		if h.Match(j) {
 			return h, nil

@@ -37,7 +37,7 @@ func runDownload(paths []string, outStr, reportPath string, concurrency int) (*f
 		out = client.NewDirectory(o.path)
 	}
 
-	cli, err := client.Build(out)
+	cli, err := client.Build(out, nil)
 	if err != nil {
 		return nil, err
 	}

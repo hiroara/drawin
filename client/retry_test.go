@@ -20,7 +20,7 @@ func buildClient(t *testing.T, cfg *client.RetryConfig) (*client.Client, error) 
 	dirpath := filepath.Join(t.TempDir(), "test-out")
 	dir := client.NewDirectory(dirpath)
 
-	return client.Build(dir, client.WithRetryConfig(cfg))
+	return client.Build(dir, nil, client.WithRetryConfig(cfg))
 }
 
 func TestDefaultRetryConfig(t *testing.T) {

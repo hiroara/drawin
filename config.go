@@ -1,5 +1,9 @@
 package drawin
 
+import (
+	"github.com/hiroara/drawin/handler"
+)
+
 type Option func(*config)
 
 func WithConcurrency(concurrency int) Option {
@@ -8,9 +12,16 @@ func WithConcurrency(concurrency int) Option {
 	}
 }
 
+func WithHandlers(hs ...handler.Handler) Option {
+	return func(cfg *config) {
+		cfg.handlers = hs
+	}
+}
+
 type config struct {
 	concurrency int
 	batchSize   int
+	handlers    []handler.Handler
 }
 
 func newConfig(opts ...Option) *config {
