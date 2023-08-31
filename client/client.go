@@ -15,7 +15,7 @@ var downloadFailure = errors.New("Download failed.")
 type Client struct {
 	out      Output
 	handlers []handler.Handler
-	retry    *RetryConfig
+	retry    *drawin.RetryConfig
 }
 
 type Output interface {
@@ -24,22 +24,18 @@ type Output interface {
 	Initialize() error
 }
 
-func New(out Output, handlers []handler.Handler, opts ...Option) *Client {
+func New(out Output, handlers []handler.Handler, retry *drawin.RetryConfig) *Client {
 	if handlers == nil {
 		handlers = handler.DefaultHandlers
 	}
-	cli := &Client{out: out, handlers: handlers}
-	for _, opt := range opts {
-		opt(cli)
-	}
-	return cli
+	return &Client{out: out, handlers: handlers, retry: retry}
 }
 
-func Build(out Output, handlers []handler.Handler, opts ...Option) (*Client, error) {
+func Build(out Output, handlers []handler.Handler, retry *drawin.RetryConfig) (*Client, error) {
 	if err := out.Initialize(); err != nil {
 		return nil, err
 	}
-	return New(out, handlers, opts...), nil
+	return New(out, handlers, retry), nil
 }
 
 func (cli *Client) Download(ctx context.Context, j *job.Job) (*drawin.Report, error) {
@@ -93,5 +89,12 @@ func (cli *Client) useCache(rep *drawin.Report) bool {
 	if rep == nil {
 		return false
 	}
-	return !cli.retry.shouldRetry(rep)
+	return !shouldRetry(cli.retry, rep)
+}
+
+func shouldRetry(cfg *drawin.RetryConfig, rep *drawin.Report) bool {
+	if cfg == nil || cfg.ShouldRetry == nil {
+		return drawin.DefaultRetryConfig.ShouldRetry(rep)
+	}
+	return cfg.ShouldRetry(rep)
 }

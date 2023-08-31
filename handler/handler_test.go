@@ -42,7 +42,7 @@ func TestCustomHandler(t *testing.T) {
 	dir := client.NewDirectory(dirpath)
 
 	h := &customHandler{}
-	cli, err := client.Build(dir, []handler.Handler{h})
+	cli, err := client.Build(dir, []handler.Handler{h}, nil)
 	require.NoError(t, err)
 
 	j := &job.Job{Name: "test1.jpg", URL: "https://example.com/test1.jpg"}

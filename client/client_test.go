@@ -42,7 +42,7 @@ func TestDownload(t *testing.T) {
 		path := filepath.Join(t.TempDir(), "test.db")
 		s, err := store.Open(path, nil)
 		require.NoError(t, err)
-		cli, err := client.Build(s, nil)
+		cli, err := client.Build(s, nil, nil)
 		require.NoError(t, err)
 
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -78,7 +78,7 @@ func TestDownload(t *testing.T) {
 		path := filepath.Join(t.TempDir(), "test.db")
 		s, err := store.Open(path, nil)
 		require.NoError(t, err)
-		cli, err := client.Build(s, nil)
+		cli, err := client.Build(s, nil, nil)
 		require.NoError(t, err)
 
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

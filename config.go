@@ -18,10 +18,17 @@ func WithHandlers(hs ...handler.Handler) Option {
 	}
 }
 
+func WithRetryConfig(retry *RetryConfig) Option {
+	return func(cfg *config) {
+		cfg.retry = retry
+	}
+}
+
 type config struct {
 	concurrency int
 	batchSize   int
 	handlers    []handler.Handler
+	retry       *RetryConfig
 }
 
 func newConfig(opts ...Option) *config {

@@ -1,4 +1,4 @@
-package client_test
+package drawin_test
 
 import (
 	"context"
@@ -16,11 +16,11 @@ import (
 	"github.com/hiroara/drawin/job"
 )
 
-func buildClient(t *testing.T, cfg *client.RetryConfig) (*client.Client, error) {
+func buildClient(t *testing.T, cfg *drawin.RetryConfig) (*client.Client, error) {
 	dirpath := filepath.Join(t.TempDir(), "test-out")
 	dir := client.NewDirectory(dirpath)
 
-	return client.Build(dir, nil, client.WithRetryConfig(cfg))
+	return client.Build(dir, nil, cfg)
 }
 
 func TestDefaultRetryConfig(t *testing.T) {
@@ -60,7 +60,7 @@ func TestCustomRetryConfig(t *testing.T) {
 	defer srv.Close()
 
 	j := &job.Job{Name: "image1.jpg", URL: srv.URL}
-	cli, err := buildClient(t, &client.RetryConfig{
+	cli, err := buildClient(t, &drawin.RetryConfig{
 		// Always retry
 		ShouldRetry: func(rep *drawin.Report) bool { return true },
 	})
