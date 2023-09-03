@@ -10,8 +10,8 @@ import (
 	bolt "go.etcd.io/bbolt"
 
 	"github.com/hiroara/drawin/internal/database"
+	"github.com/hiroara/drawin/internal/marshal"
 	"github.com/hiroara/drawin/job"
-	"github.com/hiroara/drawin/marshal"
 	"github.com/hiroara/drawin/report"
 	"github.com/hiroara/drawin/store"
 )

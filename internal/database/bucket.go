@@ -3,7 +3,7 @@ package database
 import (
 	bolt "go.etcd.io/bbolt"
 
-	"github.com/hiroara/drawin/marshal"
+	"github.com/hiroara/drawin/internal/marshal"
 )
 
 type Bucket[T any] struct {

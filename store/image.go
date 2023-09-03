@@ -4,7 +4,7 @@ import (
 	bolt "go.etcd.io/bbolt"
 
 	"github.com/hiroara/drawin/internal/database"
-	"github.com/hiroara/drawin/marshal"
+	"github.com/hiroara/drawin/internal/marshal"
 )
 
 var imageBucketKey = []byte("images")

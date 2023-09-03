@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/hiroara/drawin/marshal"
+	"github.com/hiroara/drawin/internal/marshal"
 )
 
 type entry struct {

@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/hiroara/drawin/internal/database"
+	"github.com/hiroara/drawin/internal/marshal"
 	"github.com/hiroara/drawin/job"
-	"github.com/hiroara/drawin/marshal"
 )
 
 func TestStoreCreateJob(t *testing.T) {

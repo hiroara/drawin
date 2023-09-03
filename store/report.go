@@ -5,7 +5,7 @@ import (
 
 	"github.com/hiroara/drawin"
 	"github.com/hiroara/drawin/internal/database"
-	"github.com/hiroara/drawin/marshal"
+	"github.com/hiroara/drawin/internal/marshal"
 )
 
 var reportBucketKey = []byte("reports")

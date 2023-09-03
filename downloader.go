@@ -12,8 +12,8 @@ import (
 
 	"github.com/hiroara/drawin/internal/client"
 	"github.com/hiroara/drawin/internal/database"
+	"github.com/hiroara/drawin/internal/marshal"
 	"github.com/hiroara/drawin/job"
-	"github.com/hiroara/drawin/marshal"
 	"github.com/hiroara/drawin/output"
 )
 
