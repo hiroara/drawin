@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/hiroara/carbo/source"
+	"github.com/hiroara/carbo/taskfn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/hiroara/carbo/source"
-	"github.com/hiroara/carbo/taskfn"
-	"github.com/hiroara/drawin/reader"
+	"github.com/hiroara/drawin/internal/reader"
 )
 
 func TestRead(t *testing.T) {

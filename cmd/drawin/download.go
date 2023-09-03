@@ -10,9 +10,9 @@ import (
 	"github.com/hiroara/carbo/task"
 
 	"github.com/hiroara/drawin"
+	"github.com/hiroara/drawin/internal/reader"
 	"github.com/hiroara/drawin/internal/reporter"
 	"github.com/hiroara/drawin/output"
-	"github.com/hiroara/drawin/reader"
 	"github.com/hiroara/drawin/store"
 )
 
