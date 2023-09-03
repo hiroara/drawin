@@ -12,8 +12,8 @@ type SingleDB[T any] struct {
 	marshal marshal.Spec[T]
 }
 
-func OpenSingle[T any](path string, bucket []byte, m marshal.Spec[T], opts *Options) (*SingleDB[T], error) {
-	db, err := Open(path, opts)
+func OpenSingle[T any](path string, bucket []byte, m marshal.Spec[T], create bool) (*SingleDB[T], error) {
+	db, err := Open(path, create)
 	if err != nil {
 		return nil, err
 	}

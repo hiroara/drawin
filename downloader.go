@@ -10,8 +10,8 @@ import (
 	"github.com/hiroara/carbo/source"
 	"github.com/hiroara/carbo/task"
 
-	"github.com/hiroara/drawin/database"
 	"github.com/hiroara/drawin/internal/client"
+	"github.com/hiroara/drawin/internal/database"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/marshal"
 	"github.com/hiroara/drawin/output"
@@ -36,7 +36,7 @@ func NewDownloader(out output.Output, opts ...Option) (*Downloader, error) {
 		return nil, err
 	}
 
-	cacheDB, err := database.Open(f.Name(), nil)
+	cacheDB, err := database.Open(f.Name(), true)
 	if err != nil {
 		return nil, err
 	}

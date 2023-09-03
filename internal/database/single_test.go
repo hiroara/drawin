@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	bolt "go.etcd.io/bbolt"
 
-	"github.com/hiroara/drawin/database"
+	"github.com/hiroara/drawin/internal/database"
 	"github.com/hiroara/drawin/marshal"
 )
 
@@ -19,13 +19,13 @@ type entry struct {
 var bucket = []byte("test-bucket")
 
 func openSingleDB(path string) (*database.SingleDB[*entry], error) {
-	return database.OpenSingle[*entry](path, bucket, marshal.Msgpack[*entry](), nil)
+	return database.OpenSingle[*entry](path, bucket, marshal.Msgpack[*entry](), true)
 }
 
 func TestSingle(t *testing.T) {
 	t.Parallel()
 
-	db, err := openDB(filepath.Join(t.TempDir(), "test.db"), nil)
+	db, err := openDB(filepath.Join(t.TempDir(), "test.db"), true)
 	require.NoError(t, err)
 	sdb, err := database.Single[*entry](db, bucket, marshal.Msgpack[*entry]())
 	require.NoError(t, err)
@@ -70,7 +70,7 @@ func TestSingleDBUpdateAndView(t *testing.T) {
 
 	require.NoError(t, sdb.Close())
 
-	db, err := openDB(path, nil)
+	db, err := openDB(path, true)
 	require.NoError(t, err)
 
 	err = db.View(func(tx *bolt.Tx) error {

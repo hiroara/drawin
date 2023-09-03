@@ -11,7 +11,6 @@ import (
 	"github.com/hiroara/carbo/sink"
 	"github.com/hiroara/carbo/task"
 
-	"github.com/hiroara/drawin/database"
 	"github.com/hiroara/drawin/report"
 	"github.com/hiroara/drawin/store"
 )
@@ -19,7 +18,7 @@ import (
 var errNoMatchingData = errors.New("data not found")
 
 func runRead(path string, urls []string) (*flow.Flow, error) {
-	s, err := store.Open(path, &database.Options{Create: false})
+	s, err := store.Open(path, &store.Options{Create: false})
 	if err != nil {
 		return nil, err
 	}

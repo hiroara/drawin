@@ -11,19 +11,9 @@ type DB struct {
 	db *bolt.DB
 }
 
-type Options struct {
-	Create bool
-}
-
-var DefaultOptions = &Options{Create: true}
-
-func Open(path string, opts *Options) (*DB, error) {
-	if opts == nil {
-		opts = DefaultOptions
-	}
-
+func Open(path string, create bool) (*DB, error) {
 	_, err := os.Stat(path)
-	if !opts.Create && os.IsNotExist(err) {
+	if !create && os.IsNotExist(err) {
 		return nil, err
 	}
 

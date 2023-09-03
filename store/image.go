@@ -3,7 +3,7 @@ package store
 import (
 	bolt "go.etcd.io/bbolt"
 
-	"github.com/hiroara/drawin/database"
+	"github.com/hiroara/drawin/internal/database"
 	"github.com/hiroara/drawin/marshal"
 )
 

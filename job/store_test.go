@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/hiroara/drawin/database"
+	"github.com/hiroara/drawin/internal/database"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/marshal"
 )
@@ -15,7 +15,7 @@ import (
 func TestStoreCreateJob(t *testing.T) {
 	t.Parallel()
 
-	db, err := database.OpenSingle[*job.Job](filepath.Join(t.TempDir(), "test.db"), []byte("test-bucket"), marshal.Msgpack[*job.Job](), nil)
+	db, err := database.OpenSingle[*job.Job](filepath.Join(t.TempDir(), "test.db"), []byte("test-bucket"), marshal.Msgpack[*job.Job](), true)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -64,7 +64,7 @@ func TestStoreCreateJob(t *testing.T) {
 func TestStorePut(t *testing.T) {
 	t.Parallel()
 
-	db, err := database.OpenSingle[*job.Job](filepath.Join(t.TempDir(), "test.db"), []byte("test-bucket"), marshal.Msgpack[*job.Job](), nil)
+	db, err := database.OpenSingle[*job.Job](filepath.Join(t.TempDir(), "test.db"), []byte("test-bucket"), marshal.Msgpack[*job.Job](), true)
 	require.NoError(t, err)
 	defer db.Close()
 

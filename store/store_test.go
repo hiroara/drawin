@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	bolt "go.etcd.io/bbolt"
 
-	"github.com/hiroara/drawin/database"
+	"github.com/hiroara/drawin/internal/database"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/marshal"
 	"github.com/hiroara/drawin/report"
@@ -21,7 +21,7 @@ func TestStore(t *testing.T) {
 
 	buildStore := func(t *testing.T) (*database.DB, *store.Store) {
 		path := filepath.Join(t.TempDir(), "out", "test.db")
-		db, err := database.Open(path, nil)
+		db, err := database.Open(path, true)
 		require.NoError(t, err)
 
 		s := store.New(db)

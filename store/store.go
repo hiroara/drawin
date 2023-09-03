@@ -4,7 +4,7 @@ import (
 	bolt "go.etcd.io/bbolt"
 
 	"github.com/hiroara/drawin"
-	"github.com/hiroara/drawin/database"
+	"github.com/hiroara/drawin/internal/database"
 	"github.com/hiroara/drawin/job"
 )
 
@@ -16,8 +16,17 @@ func New(db *database.DB) *Store {
 	return &Store{db: db}
 }
 
-func Open(path string, dbOpts *database.Options) (*Store, error) {
-	db, err := database.Open(path, dbOpts)
+type Options struct {
+	Create bool
+}
+
+var DefaultOptions = &Options{Create: true}
+
+func Open(path string, opts *Options) (*Store, error) {
+	if opts == nil {
+		opts = DefaultOptions
+	}
+	db, err := database.Open(path, opts.Create)
 	if err != nil {
 		return nil, err
 	}

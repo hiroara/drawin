@@ -13,7 +13,6 @@ import (
 	"github.com/hiroara/carbo/source"
 	"github.com/hiroara/carbo/task"
 	"github.com/hiroara/drawin"
-	"github.com/hiroara/drawin/database"
 	"github.com/hiroara/drawin/job"
 	"github.com/hiroara/drawin/store"
 )
@@ -41,7 +40,7 @@ func getReports(s *store.Store, urls []string) source.Source[*drawin.Report] {
 }
 
 func runReport(path string, urls []string) (*flow.Flow, error) {
-	s, err := store.Open(path, &database.Options{Create: false})
+	s, err := store.Open(path, &store.Options{Create: false})
 	if err != nil {
 		return nil, err
 	}
